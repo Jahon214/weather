@@ -1,0 +1,21 @@
+{
+  "name": "ob-havo-pro",
+  "version": "1.0.0",
+  "description": "O'zbekiston va Dunyo shaharlarining real vaqtdagi mukammal ob-havo platformasi",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "weather",
+    "ob-havo",
+    "uzbekistan",
+    "open-meteo",
+    "tailwind",
+    "glassmorphism",
+    "chartjs"
+  ],
+  "author": "Jahon214",
+  "license": "MIT"
+}

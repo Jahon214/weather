@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ob-Havo Pro — O'zbekiston va Dunyo Ob-Havo Portali</title>
+    
+    <!-- SEO & OpenGraph Meta Tags -->
+    <meta name="description" content="O'zbekiston viloyatlari va dunyo shaharlarining real vaqtdagi aniq ob-havosi, 24 soatlik va 7 kunlik prognozi, havo sifati (AQI).">
+    <meta property="og:title" content="Ob-Havo Pro — Mukammal Ob-Havo Portali">
+    <meta property="og:description" content="Real vaqtdagi ob-havo ma'lumotlari, jonli grafika va havo sifati.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#091326">
+
+    <!-- Favicon (SVG Data URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts & Font Awesome 6 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Chart.js CDN for Hourly Temperature Visuals -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.8s ease-in-out, color 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        /* Weather Particle Canvas */
+        #weatherCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .glass-pill:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        /* Dynamic Weather Background Gradients */
+        .bg-clear-day {
+            background: linear-gradient(135deg, #091326 0%, #0369a1 40%, #ea580c 100%);
+        }
+        .bg-clear-night {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 45%, #1e1b4b 100%);
+        }
+        .bg-clouds-day {
+            background: linear-gradient(135deg, #0f172a 0%, #334155 50%, #1e293b 100%);
+        }
+        .bg-clouds-night {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+        }
+        .bg-rain {
+            background: linear-gradient(135deg, #020617 0%, #075985 50%, #0c4a6e 100%);
+        }
+        .bg-snow {
+            background: linear-gradient(135deg, #0b1329 0%, #1e293b 40%, #0284c7 100%);
+        }
+        .bg-thunder {
+            background: linear-gradient(135deg, #020617 0%, #3b0764 50%, #1e1b4b 100%);
+        }
+        .bg-fog {
+            background: linear-gradient(135deg, #0f172a 0%, #374151 50%, #1f2937 100%);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.6);
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Toast animation */
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-toast {
+            animation: slideInUp 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body id="appBg" class="bg-clear-day text-slate-100 min-h-screen relative p-3 sm:p-6 md:p-8 flex flex-col justify-between">
+
+    <!-- Canvas for Dynamic Weather Particles (Rain, Snow, Thunder, Twinkling Stars) -->
+    <canvas id="weatherCanvas"></canvas>
+
+    <!-- Ambient Glow Background Circles -->
+    <div class="fixed top-[-10vw] left-[-10vw] w-[45vw] h-[45vw] rounded-full bg-cyan-500/15 blur-[140px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10vw] right-[-10vw] w-[50vw] h-[50vw] rounded-full bg-amber-500/15 blur-[150px] pointer-events-none z-0"></div>
+
+    <!-- MAIN WRAPPER -->
+    <div class="max-w-7xl mx-auto w-full space-y-6 relative z-10">
+
+        <!-- HEADER & SEARCH BAR -->
+        <header class="glass-panel p-4 sm:p-5 rounded-3xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-2xl">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center justify-between w-full lg:w-auto">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-400 to-amber-400 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-sky-500/30 animate-float">
+                        <i class="fa-solid fa-cloud-bolt-sun"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-extrabold tracking-wide bg-gradient-to-r from-cyan-300 via-white to-amber-300 bg-clip-text text-transparent">
+                            Ob-Havo Pro
+                        </h1>
+                        <p class="text-xs text-slate-300 font-medium">O'zbekiston va Dunyo Ob-Havo Portali</p>
+                    </div>
+                </div>
+
+                <!-- Mobile Action Buttons -->
+                <div class="flex lg:hidden items-center gap-2">
+                    <button onclick="toggleFavoriteCurrent()" id="btnFavoriteMobile" class="p-2.5 glass-pill rounded-2xl text-slate-300 hover:text-amber-300 active:scale-95" title="Sevimlilar">
+                        <i class="fa-regular fa-star text-base"></i>
+                    </button>
+                    <button onclick="getUserLocation()" class="p-2.5 glass-pill rounded-2xl text-cyan-300 active:scale-95" title="Mening joylashuvim">
+                        <i class="fa-solid fa-location-crosshairs text-base"></i>
+                    </button>
+                    <div class="glass-pill p-1 rounded-2xl flex items-center border border-white/10 text-xs">
+                        <button id="btnCelsiusMob" onclick="setTemperatureUnit('C')" class="px-2 py-1 rounded-xl font-bold bg-cyan-400 text-slate-950">°C</button>
+                        <button id="btnFahrenheitMob" onclick="setTemperatureUnit('F')" class="px-2 py-1 rounded-xl font-bold text-slate-300">°F</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Form -->
+            <div class="relative w-full lg:w-[480px]">
+                <div class="relative flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-slate-400 text-sm"></i>
+                    <input type="text" id="citySearchInput" placeholder="Shahar nomini kiriting (masalan: Samarqand, London)..." 
+                           class="w-full bg-slate-900/80 text-sm text-white placeholder-slate-400 pl-11 pr-28 py-3.5 rounded-2xl border border-white/10 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
+                           autocomplete="off"
+                           onkeydown="if(event.key === 'Enter') executeSearch()">
+                    <button onclick="executeSearch()" class="absolute right-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all active:scale-95">
+                        Qidirish
+                    </button>
+                </div>
+                <!-- Search Suggestions Dropdown -->
+                <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-2 glass-panel rounded-2xl border border-white/15 overflow-hidden shadow-2xl z-50 max-h-72 overflow-y-auto"></div>
+            </div>
+
+            <!-- Desktop Controls: Favorite, Geolocation, Refresh & Unit Switcher -->
+            <div class="hidden lg:flex items-center gap-3">
+                <button onclick="refreshCurrentWeather()" id="btnRefresh" class="p-3.5 glass-pill rounded-2xl hover:text-cyan-300 transition text-slate-300" title="Ob-havoni yangilash">
+                    <i class="fa-solid fa-arrows-rotate text-lg"></i>
+                </button>
+                <button onclick="toggleFavoriteCurrent()" id="btnFavorite" class="p-3.5 glass-pill rounded-2xl hover:text-amber-300 transition text-slate-300" title="Sevimlilarga qo'shish">
+                    <i class="fa-regular fa-star text-lg"></i>
+                </button>
+                <button onclick="getUserLocation()" class="p-3.5 glass-pill rounded-2xl hover:text-cyan-300 transition text-slate-300 flex items-center gap-2" title="Mening joylashuvim">
+                    <i class="fa-solid fa-location-crosshairs text-lg"></i>
+                    <span class="text-xs font-semibold">Joylashuvim</span>
+                </button>
+                
+                <div class="glass-pill p-1 rounded-2xl flex items-center border border-white/10">
+                    <button id="btnCelsius" onclick="setTemperatureUnit('C')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs transition bg-cyan-400 text-slate-950 shadow">
+                        °C
+                    </button>
+                    <button id="btnFahrenheit" onclick="setTemperatureUnit('F')" class="px-3.5 py-1.5 rounded-xl font-bold text-xs transition text-slate-300 hover:text-white">
+                        °F
+                    </button>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- UZBEKISTAN REGIONS & POPULAR CITIES QUICK SELECTOR -->
+        <section class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-300 px-1">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-cyan-400"></i> O'zbekiston Viloyatlari va Dunyo Shaharlari:
+                </span>
+                <span id="favoritesCount" class="text-amber-300 font-bold"></span>
+            </div>
+            
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="quickCitiesBar">
+                <!-- Injected via JavaScript -->
+            </div>
+        </section>
+
+        <!-- LOADING INDICATOR -->
+        <div id="loadingOverlay" class="hidden glass-panel p-12 rounded-3xl text-center space-y-4">
+            <div class="inline-block w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-sm font-semibold text-slate-200">Jonli ob-havo ma'lumotlari yuklanmoqda, iltimos kuting...</p>
+        </div>
+
+        <!-- MAIN WEATHER CONTENT -->
+        <main id="mainWeatherContent" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- LEFT & CENTER COLUMN: Current Weather & Hourly Chart -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- MAIN WEATHER HERO CARD -->
+                <div class="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between min-h-[360px]">
+                    
+                    <!-- Decorative Large Weather Icon -->
+                    <div id="bgWeatherIcon" class="absolute -right-6 -bottom-6 text-[220px] text-white/5 pointer-events-none select-none">
+                        <i class="fa-solid fa-sun"></i>
+                    </div>
+
+                    <!-- Top Row: Location, Time & Condition -->
+                    <div class="flex flex-wrap justify-between items-start gap-4 z-10">
+                        <div>
+                            <div class="flex items-center gap-2 text-cyan-300 font-bold text-base tracking-wide">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span id="cityName">Toshkent, O'zbekiston</span>
+                            </div>
+                            <p id="currentDate" class="text-xs text-slate-300 font-medium mt-1">Dushanba, 29-Oktyabr</p>
+                        </div>
+
+                        <div id="weatherConditionTag" class="glass-pill px-4 py-2 rounded-full text-xs font-bold text-amber-300 border border-amber-300/30 flex items-center gap-2">
+                            <i id="weatherConditionIcon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
+                            <span id="weatherConditionText">Ochiq, Quyoshli</span>
+                        </div>
+                    </div>
+
+                    <!-- Middle Temp Hero Row -->
+                    <div class="my-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 z-10">
+                        <div class="flex items-baseline gap-3">
+                            <span id="mainTemp" class="text-7xl sm:text-8xl font-black tracking-tight text-white drop-shadow-lg">
+                                22°
+                            </span>
+                            <div class="flex flex-col text-slate-300 text-xs sm:text-sm font-medium space-y-1">
+                                <span>Hissiyot: <strong id="feelsLikeTemp" class="text-white font-bold">24°</strong></span>
+                                <span>Min/Maks: <strong id="minMaxTemp" class="text-white font-bold">14° / 25°</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4">
+                            <div id="heroAnimIcon" class="text-6xl sm:text-7xl text-amber-400 animate-float drop-shadow-2xl">
+                                <i class="fa-solid fa-sun"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Metrics Grid (4 Key Cards) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 z-10 pt-4 border-t border-white/10">
+                        
+                        <div class="glass-card p-3 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 text-base">
+                                <i class="fa-solid fa-droplet"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Namlik</p>
+                                <p id="humidityVal" class="text-sm font-bold text-white">45%</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-3 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-sky-500/20 text-sky-300 text-base">
+                                <i class="fa-solid fa-wind"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Shamol</p>
+                                <p id="windSpeedVal" class="text-sm font-bold text-white">12 km/h (S)</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-3 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 text-base">
+                                <i class="fa-solid fa-gauge-high"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Bosim</p>
+                                <p id="pressureVal" class="text-sm font-bold text-white">760 mm Hg</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-3 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 text-base">
+                                <i class="fa-solid fa-sun"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">UV Indeksi</p>
+                                <p id="uvIndexVal" class="text-sm font-bold text-white">5 (O'rtacha)</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 24-HOUR FORECAST WITH INTERACTIVE GRAPH & CARDS -->
+                <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-cyan-400"></i> 24 Soatlik Prognoz
+                        </h3>
+                        <span class="text-xs text-slate-400 font-medium">Soatbay kutilayotgan o'zgarishlar</span>
+                    </div>
+
+                    <!-- Hourly Cards Horizontal Scrollbar -->
+                    <div id="hourlyContainer" class="flex items-center gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar">
+                        <!-- Dynamic Hourly Cards -->
+                    </div>
+
+                    <!-- Hourly Chart Visual -->
+                    <div class="pt-2 h-44 w-full">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Air Quality, Sun/Moon & 7-Day Forecast -->
+            <div class="space-y-6">
+
+                <!-- AIR QUALITY INDEX (AQI) WIDGET -->
+                <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2">
+                            <i class="fa-solid fa-wind text-teal-400"></i> Havo Sifati Indeksi (AQI)
+                        </h3>
+                        <span id="aqiBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            A'lo
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-1">
+                        <div id="aqiVal" class="text-4xl font-extrabold text-emerald-400">
+                            32
+                        </div>
+                        <div class="space-y-1 text-xs">
+                            <p id="aqiStatus" class="font-bold text-white">Havo toza va toza nafas olish uchun mos.</p>
+                            <p id="aqiDetails" class="text-slate-400">PM2.5 ko'rsatkichlari xavfsiz darajada.</p>
+                        </div>
+                    </div>
+
+                    <!-- AQI Progress Bar -->
+                    <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden relative mt-2">
+                        <div id="aqiBar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-rose-500 rounded-full transition-all duration-1000" style="width: 20%;"></div>
+                    </div>
+                </div>
+
+                <!-- SUN & MOON TIMINGS CARD -->
+                <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sun-plant-wilt text-amber-400"></i> Quyosh & Ko'rinuvchanlik
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="glass-card p-3.5 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 text-lg">
+                                <i class="fa-solid fa-sun"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Quyosh chiqishi</p>
+                                <p id="sunriseVal" class="text-xs sm:text-sm font-extrabold text-white">06:48</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-3.5 rounded-2xl flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-orange-500/20 text-orange-400 text-lg">
+                                <i class="fa-solid fa-moon"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Quyosh botishi</p>
+                                <p id="sunsetVal" class="text-xs sm:text-sm font-extrabold text-white">18:22</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-3.5 rounded-2xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-purple-500/20 text-purple-300 text-base">
+                                <i class="fa-solid fa-eye"></i>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium">Ko'rinuvchanlik</p>
+                                <p id="visibilityVal" class="text-xs sm:text-sm font-bold text-white">10 km</p>
+                            </div>
+                        </div>
+                        <span id="visibilityBadge" class="text-xs text-emerald-400 font-semibold">Tiniq</span>
+                    </div>
+                </div>
+
+                <!-- 7-DAY FORECAST -->
+                <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <h3 class="font-bold text-base text-white flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-days text-cyan-400"></i> 7 Kunlik Prognoz
+                        </h3>
+                        <span class="text-xs text-cyan-300 font-medium">Haftalik ob-havo</span>
+                    </div>
+
+                    <div id="dailyForecastContainer" class="space-y-2.5">
+                        <!-- Dynamic Daily Rows Injected Here -->
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="glass-panel p-4 rounded-2xl text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>© 2026 Ob-Havo Pro — O'zbekiston va Dunyo Ob-Havo Platformasi</p>
+            <div class="flex items-center gap-4 text-slate-300 font-medium">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> Open-Meteo Real-Time API</span>
+                <span class="text-slate-600">|</span>
+                <a href="https://github.com/Jahon214" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition flex items-center gap-1.5">
+                    <i class="fa-brands fa-github text-white"></i> GitHub
+                </a>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT LOGIC & API INTEGRATION -->
+    <script>
+        // Preset Uzbekistan Regions & Top Global Metropolises
+        const defaultCities = [
+            { name: "Toshkent", lat: 41.2995, lon: 69.2401, region: "Toshkent shahri" },
+            { name: "Samarqand", lat: 39.6542, lon: 66.9597, region: "Samarqand viloyati" },
+            { name: "Buxoro", lat: 39.7747, lon: 64.4286, region: "Buxoro viloyati" },
+            { name: "Andijon", lat: 40.7821, lon: 72.3442, region: "Andijon viloyati" },
+            { name: "Namangan", lat: 40.9983, lon: 71.6726, region: "Namangan viloyati" },
+            { name: "Farg'ona", lat: 40.3842, lon: 71.7843, region: "Farg'ona viloyati" },
+            { name: "Qarshi", lat: 38.8605, lon: 65.7890, region: "Qashqadaryo viloyati" },
+            { name: "Termiz", lat: 37.2242, lon: 67.2783, region: "Surxondaryo viloyati" },
+            { name: "Urganch", lat: 41.5500, lon: 60.6333, region: "Xorazm viloyati" },
+            { name: "Nukus", lat: 42.4603, lon: 59.6180, region: "Qoraqalpog'iston" },
+            { name: "Jizzax", lat: 40.1158, lon: 67.8422, region: "Jizzax viloyati" },
+            { name: "Guliston", lat: 40.4897, lon: 68.7842, region: "Sirdaryo viloyati" },
+            { name: "Navoiy", lat: 40.0844, lon: 65.3792, region: "Navoiy viloyati" },
+            { name: "Nurafshon", lat: 41.0422, lon: 69.3561, region: "Toshkent viloyati" },
+            { name: "Istanbul", lat: 41.0082, lon: 28.9784, region: "Turkiya" },
+            { name: "London", lat: 51.5074, lon: -0.1278, region: "Buyuk Britaniya" },
+            { name: "Moskva", lat: 55.7558, lon: 37.6173, region: "Rossiya" },
+            { name: "Dubay", lat: 25.2048, lon: 55.2708, region: "BAA" },
+            { name: "New York", lat: 40.7128, lon: -74.0060, region: "AQSH" },
+            { name: "Tokyo", lat: 35.6762, lon: 139.6503, region: "Yaponiya" }
+        ];
+
+        // State Variables
+        let savedCity = null;
+        try {
+            savedCity = JSON.parse(localStorage.getItem('obhavo_last_city'));
+        } catch (e) {}
+
+        let currentCity = savedCity || defaultCities[0];
+        let currentUnit = localStorage.getItem('obhavo_unit') || 'C';
+        let currentWeatherData = null;
+        let favoriteCities = JSON.parse(localStorage.getItem('obhavo_favorites')) || ['Toshkent', 'Samarqand', 'Buxoro'];
+        let chartInstance = null;
+        let animationFrameId = null;
+
+        // WMO Weather Interpretation Codes (Standardized Day & Night definitions)
+        const wmoCodeMap = {
+            0: { dayText: "Ochiq, Quyoshli", nightText: "Ochiq, Oydin tun", condition: "clear", dayIcon: "fa-sun", nightIcon: "fa-moon", color: "text-amber-400" },
+            1: { dayText: "Asosan ochiq", nightText: "Asosan ochiq tun", condition: "clear", dayIcon: "fa-cloud-sun", nightIcon: "fa-cloud-moon", color: "text-amber-300" },
+            2: { dayText: "Qisman bulutli", nightText: "Qisman bulutli tun", condition: "clouds", dayIcon: "fa-cloud-sun", nightIcon: "fa-cloud-moon", color: "text-slate-300" },
+            3: { dayText: "Bulutli", nightText: "Bulutli", condition: "clouds", dayIcon: "fa-cloud", nightIcon: "fa-cloud", color: "text-slate-400" },
+            45: { dayText: "Tumanli", nightText: "Tumanli", condition: "fog", dayIcon: "fa-smog", nightIcon: "fa-smog", color: "text-slate-300" },
+            48: { dayText: "Qirovli tuman", nightText: "Qirovli tuman", condition: "fog", dayIcon: "fa-smog", nightIcon: "fa-smog", color: "text-slate-200" },
+            51: { dayText: "Yengil shivalash", nightText: "Yengil shivalash", condition: "rain", dayIcon: "fa-cloud-rain", nightIcon: "fa-cloud-rain", color: "text-cyan-300" },
+            53: { dayText: "O'rtacha shivalash", nightText: "O'rtacha shivalash", condition: "rain", dayIcon: "fa-cloud-rain", nightIcon: "fa-cloud-rain", color: "text-cyan-400" },
+            55: { dayText: "Kuchli shivalash", nightText: "Kuchli shivalash", condition: "rain", dayIcon: "fa-cloud-showers-heavy", nightIcon: "fa-cloud-showers-heavy", color: "text-cyan-500" },
+            61: { dayText: "Yengil yomg'ir", nightText: "Yengil yomg'ir", condition: "rain", dayIcon: "fa-cloud-rain", nightIcon: "fa-cloud-rain", color: "text-blue-300" },
+            63: { dayText: "O'rtacha yomg'ir", nightText: "O'rtacha yomg'ir", condition: "rain", dayIcon: "fa-cloud-showers-heavy", nightIcon: "fa-cloud-showers-heavy", color: "text-blue-400" },
+            65: { dayText: "Kuchli yomg'ir", nightText: "Kuchli yomg'ir", condition: "rain", dayIcon: "fa-cloud-showers-heavy", nightIcon: "fa-cloud-showers-heavy", color: "text-blue-500" },
+            71: { dayText: "Yengil qor", nightText: "Yengil qor", condition: "snow", dayIcon: "fa-snowflake", nightIcon: "fa-snowflake", color: "text-sky-200" },
+            73: { dayText: "O'rtacha qor", nightText: "O'rtacha qor", condition: "snow", dayIcon: "fa-snowflake", nightIcon: "fa-snowflake", color: "text-sky-300" },
+            75: { dayText: "Kuchli qor yog'ishi", nightText: "Kuchli qor yog'ishi", condition: "snow", dayIcon: "fa-snowflake", nightIcon: "fa-snowflake", color: "text-sky-100" },
+            80: { dayText: "Qisqa muddatli yomg'ir", nightText: "Qisqa muddatli yomg'ir", condition: "rain", dayIcon: "fa-cloud-rain", nightIcon: "fa-cloud-rain", color: "text-cyan-400" },
+            95: { dayText: "Momaqaldiroq", nightText: "Momaqaldiroq", condition: "thunder", dayIcon: "fa-cloud-bolt", nightIcon: "fa-cloud-bolt", color: "text-purple-400" },
+            96: { dayText: "Momaqaldiroq va do'l", nightText: "Momaqaldiroq va do'l", condition: "thunder", dayIcon: "fa-cloud-bolt", nightIcon: "fa-cloud-bolt", color: "text-purple-300" }
+        };
+
+        // App Initialization
+        window.addEventListener('load', () => {
+            initCanvas();
+            renderQuickCitiesBar();
+            updateDateDisplay();
+            setTemperatureUnit(currentUnit, false);
+            fetchWeatherData(currentCity);
+            setupSearchAutocomplete();
+
+            // Keyboard shortcut '/' to search
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.id !== 'citySearchInput') {
+                    e.preventDefault();
+                    document.getElementById('citySearchInput').focus();
+                }
+            });
+        });
+
+        // Date Display
+        function updateDateDisplay() {
+            const now = new Date();
+            const days = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+            const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
+            document.getElementById('currentDate').innerText = `${days[now.getDay()]}, ${now.getDate()}-${months[now.getMonth()]}`;
+        }
+
+        // Fetch Live Weather & Air Quality Data using Open-Meteo APIs
+        async function fetchWeatherData(city) {
+            showLoading(true);
+            try {
+                // Weather Forecast API
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,visibility&hourly=temperature_2m,weather_code,relative_humidity_2m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max&timezone=auto`;
+                
+                // Air Quality API
+                const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,european_aqi`;
+
+                const [weatherRes, aqiRes] = await Promise.all([
+                    fetch(weatherUrl).then(r => {
+                        if (!r.ok) throw new Error("Ob-havo serveridan javob kelmadi");
+                        return r.json();
+                    }),
+                    fetch(aqiUrl).then(r => r.json()).catch(() => null)
+                ]);
+
+                currentWeatherData = {
+                    city: city,
+                    weather: weatherRes,
+                    aqi: aqiRes
+                };
+
+                // Remember selected city in localStorage
+                localStorage.setItem('obhavo_last_city', JSON.stringify(city));
+
+                renderUI();
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                showToast("Ob-havo ma'lumotlarini yuklashda xatolik yuz berdi. Internet aloqasini tekshiring.", "error");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Manual Refresh
+        function refreshCurrentWeather() {
+            const btn = document.getElementById('btnRefresh');
+            btn.querySelector('i').classList.add('fa-spin');
+            fetchWeatherData(currentCity).finally(() => {
+                setTimeout(() => {
+                    btn.querySelector('i').classList.remove('fa-spin');
+                    showToast("Ob-havo muvaffaqiyatli yangilandi!", "success");
+                }, 500);
+            });
+        }
+
+        // Render UI with fetched data
+        function renderUI() {
+            if (!currentWeatherData) return;
+
+            const { city, weather, aqi } = currentWeatherData;
+            const current = weather.current;
+            const daily = weather.daily;
+            const hourly = weather.hourly;
+            const isDay = current.is_day === 1;
+
+            // City Title & Favorite Status
+            document.getElementById('cityName').innerText = `${city.name}, ${city.region || "O'zbekiston"}`;
+            updateFavoriteButtonUI();
+
+            // Weather Condition
+            const wInfo = wmoCodeMap[current.weather_code] || wmoCodeMap[0];
+            const condText = isDay ? wInfo.dayText : wInfo.nightText;
+            const condIcon = isDay ? wInfo.dayIcon : wInfo.nightIcon;
+
+            document.getElementById('weatherConditionText').innerText = condText;
+            document.getElementById('weatherConditionIcon').className = `fa-solid ${condIcon} ${wInfo.color} text-sm`;
+
+            // Temperature Values
+            document.getElementById('mainTemp').innerText = formatTemp(current.temperature_2m);
+            document.getElementById('feelsLikeTemp').innerText = formatTemp(current.apparent_temperature);
+            document.getElementById('minMaxTemp').innerText = `${formatTemp(daily.temperature_2m_min[0])} / ${formatTemp(daily.temperature_2m_max[0])}`;
+
+            // Weather Condition Icons & Canvas Effect
+            document.getElementById('heroAnimIcon').innerHTML = `<i class="fa-solid ${condIcon} ${wInfo.color}"></i>`;
+            document.getElementById('bgWeatherIcon').innerHTML = `<i class="fa-solid ${condIcon}"></i>`;
+            
+            // Background & Particle System Update (Day/Night aware)
+            setThemeBackground(wInfo.condition, isDay);
+            startWeatherParticles(wInfo.condition, isDay);
+
+            // Metrics: Humidity, Wind, Pressure, UV
+            document.getElementById('humidityVal').innerText = `${current.relative_humidity_2m}%`;
+            
+            // Wind speed & Direction
+            const windKm = Math.round(current.wind_speed_10m);
+            const windDir = getWindDirectionText(current.wind_direction_10m);
+            document.getElementById('windSpeedVal').innerText = `${windKm} km/h (${windDir})`;
+
+            // Pressure (Convert hPa to mmHg)
+            const mmHg = Math.round(current.surface_pressure * 0.750062);
+            document.getElementById('pressureVal').innerText = `${mmHg} mm Hg`;
+
+            // UV Index
+            const uv = Math.round(daily.uv_index_max[0] || 0);
+            document.getElementById('uvIndexVal').innerText = `${uv} (${getUvDescription(uv)})`;
+
+            // Visibility
+            const visKm = current.visibility ? (current.visibility / 1000).toFixed(1) : '10.0';
+            document.getElementById('visibilityVal').innerText = `${visKm} km`;
+            const visBadge = document.getElementById('visibilityBadge');
+            if (visKm >= 10) {
+                visBadge.innerText = "A'lo darajada tiniq";
+                visBadge.className = "text-xs text-emerald-400 font-semibold";
+            } else if (visKm >= 5) {
+                visBadge.innerText = "Yaxshi ko'rinish";
+                visBadge.className = "text-xs text-sky-400 font-semibold";
+            } else {
+                visBadge.innerText = "Xiralashgan / Tuman";
+                visBadge.className = "text-xs text-amber-400 font-semibold";
+            }
+
+            // Sunrise & Sunset
+            document.getElementById('sunriseVal').innerText = formatTime(daily.sunrise[0]);
+            document.getElementById('sunsetVal').innerText = formatTime(daily.sunset[0]);
+
+            // Air Quality Render
+            renderAQI(aqi);
+
+            // Hourly Forecast & Chart
+            renderHourlyForecast(hourly);
+
+            // 7-Day Forecast Render
+            renderDailyForecast(daily);
+        }
+
+        // Theme & Gradient Background with Day/Night awareness
+        function setThemeBackground(condition, isDay) {
+            const bgElement = document.getElementById('appBg');
+            let bgClass = 'bg-clear-day';
+
+            if (condition === 'clear') {
+                bgClass = isDay ? 'bg-clear-day' : 'bg-clear-night';
+            } else if (condition === 'clouds') {
+                bgClass = isDay ? 'bg-clouds-day' : 'bg-clouds-night';
+            } else if (condition === 'rain') {
+                bgClass = 'bg-rain';
+            } else if (condition === 'snow') {
+                bgClass = 'bg-snow';
+            } else if (condition === 'thunder') {
+                bgClass = 'bg-thunder';
+            } else if (condition === 'fog') {
+                bgClass = 'bg-fog';
+            }
+
+            bgElement.className = `${bgClass} text-slate-100 min-h-screen relative p-3 sm:p-6 md:p-8 flex flex-col justify-between`;
+        }
+
+        // AQI Rendering
+        function renderAQI(aqi) {
+            const aqiVal = aqi?.current?.european_aqi ?? 25;
+            const pm25 = aqi?.current?.pm2_5 ? aqi.current.pm2_5.toFixed(1) : '12';
+            const pm10 = aqi?.current?.pm10 ? aqi.current.pm10.toFixed(1) : '22';
+
+            const valElem = document.getElementById('aqiVal');
+            const badgeElem = document.getElementById('aqiBadge');
+            const statusElem = document.getElementById('aqiStatus');
+            const detailsElem = document.getElementById('aqiDetails');
+            const barElem = document.getElementById('aqiBar');
+
+            valElem.innerText = aqiVal;
+            const percent = Math.min(100, Math.max(10, (aqiVal / 100) * 100));
+            barElem.style.width = `${percent}%`;
+
+            if (aqiVal <= 20) {
+                badgeElem.innerText = "A'lo";
+                badgeElem.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                statusElem.innerText = "Havo sof va juda toza. Tashqi mashg'ulotlar uchun ayni muddao.";
+                valElem.className = "text-4xl font-extrabold text-emerald-400";
+            } else if (aqiVal <= 40) {
+                badgeElem.innerText = "Yaxshi";
+                badgeElem.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30";
+                statusElem.innerText = "Havo sifati qoniqarli va salomatlik uchun xavfsiz darajada.";
+                valElem.className = "text-4xl font-extrabold text-teal-400";
+            } else if (aqiVal <= 60) {
+                badgeElem.innerText = "O'rtacha";
+                badgeElem.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30";
+                statusElem.innerText = "Sezuvchan guruhlar uchun yengil noqulaylik tug'dirishi mumkin.";
+                valElem.className = "text-4xl font-extrabold text-yellow-400";
+            } else {
+                badgeElem.innerText = "Zararli";
+                badgeElem.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                statusElem.innerText = "Tashqarida uzoq vaqt qolmaslik va himoya niqobi taqish tavsiya etiladi.";
+                valElem.className = "text-4xl font-extrabold text-rose-400";
+            }
+
+            detailsElem.innerText = `PM2.5: ${pm25} µg/m³ • PM10: ${pm10} µg/m³`;
+        }
+
+        // Hourly Forecast & Chart Rendering
+        function renderHourlyForecast(hourly) {
+            const container = document.getElementById('hourlyContainer');
+            container.innerHTML = '';
+
+            // Find current time index in hourly.time array
+            const now = new Date();
+            const currentIsoDate = now.toISOString().slice(0, 10);
+            const currentHour = now.getHours();
+
+            let startIndex = hourly.time.findIndex(t => {
+                const itemDate = new Date(t);
+                return itemDate.getHours() === currentHour && t.startsWith(currentIsoDate);
+            });
+
+            if (startIndex === -1) {
+                startIndex = currentHour;
+            }
+            if (startIndex < 0 || startIndex + 24 > hourly.time.length) {
+                startIndex = 0;
+            }
+
+            const hoursSlice = hourly.time.slice(startIndex, startIndex + 24);
+            const tempsSlice = hourly.temperature_2m.slice(startIndex, startIndex + 24);
+            const codesSlice = hourly.weather_code.slice(startIndex, startIndex + 24);
+
+            const labels = [];
+            const tempsFormatted = [];
+
+            hoursSlice.forEach((tStr, idx) => {
+                const itemDate = new Date(tStr);
+                const hourNum = itemDate.getHours();
+                const timeLabel = idx === 0 ? "Hozir" : `${hourNum.toString().padStart(2, '0')}:00`;
+                labels.push(`${hourNum.toString().padStart(2, '0')}:00`);
+
+                const rawTemp = tempsSlice[idx];
+                tempsFormatted.push(currentUnit === 'F' ? Math.round((rawTemp * 9/5) + 32) : Math.round(rawTemp));
+
+                const code = codesSlice[idx];
+                const isItemDay = hourNum >= 6 && hourNum < 19;
+                const wInfo = wmoCodeMap[code] || wmoCodeMap[0];
+                const icon = isItemDay ? wInfo.dayIcon : wInfo.nightIcon;
+
+                const card = document.createElement('div');
+                card.className = "glass-card p-3 rounded-2xl flex flex-col items-center gap-2 min-w-[76px] hover:border-cyan-400/50 cursor-pointer transition shrink-0";
+                card.innerHTML = `
+                    <span class="text-xs text-slate-300 font-medium">${timeLabel}</span>
+                    <i class="fa-solid ${icon} ${wInfo.color} text-lg my-1"></i>
+                    <span class="text-sm font-bold text-white">${formatTemp(rawTemp)}</span>
+                `;
+                container.appendChild(card);
+            });
+
+            // Update Chart.js
+            renderHourlyChart(labels, tempsFormatted);
+        }
+
+        // Chart.js Temperature Rendering
+        function renderHourlyChart(labels, data) {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+            gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        borderColor: '#38bdf8',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#0ea5e9',
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.38
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `Harorat: ${ctx.parsed.y}°${currentUnit}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.65)', 
+                                font: { size: 10 },
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Daily 7-Day Forecast Rendering
+        function renderDailyForecast(daily) {
+            const container = document.getElementById('dailyForecastContainer');
+            container.innerHTML = '';
+
+            const days = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+
+            for (let i = 0; i < 7; i++) {
+                const dateObj = new Date(daily.time[i]);
+                const dayName = i === 0 ? "Bugun" : days[dateObj.getDay()];
+                
+                const wCode = daily.weather_code[i];
+                const wInfo = wmoCodeMap[wCode] || wmoCodeMap[0];
+                
+                const minT = daily.temperature_2m_min[i];
+                const maxT = daily.temperature_2m_max[i];
+
+                const row = document.createElement('div');
+                row.className = "glass-card p-3 px-4 rounded-2xl flex items-center justify-between hover:bg-white/10 transition";
+                row.innerHTML = `
+                    <span class="text-xs font-semibold text-slate-200 w-24">${dayName}</span>
+                    <div class="flex items-center gap-2 text-xs text-slate-300 w-36">
+                        <i class="fa-solid ${wInfo.dayIcon} ${wInfo.color} text-base"></i>
+                        <span class="truncate">${wInfo.dayText}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-bold text-white">
+                        <span>${formatTemp(maxT)}</span>
+                        <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden relative">
+                            <div class="absolute inset-y-0 left-2 right-2 bg-gradient-to-r from-cyan-400 to-amber-400 rounded-full"></div>
+                        </div>
+                        <span class="text-slate-400 font-medium">${formatTemp(minT)}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+        }
+
+        // Quick Cities Bar Generator
+        function renderQuickCitiesBar() {
+            const bar = document.getElementById('quickCitiesBar');
+            bar.innerHTML = '';
+
+            // Favorites first
+            favoriteCities.forEach(favName => {
+                const cityObj = defaultCities.find(c => c.name.toLowerCase() === favName.toLowerCase()) || { name: favName, lat: 41.2995, lon: 69.2401, region: "Sevimli" };
+                const btn = createCityPill(cityObj, true);
+                bar.appendChild(btn);
+            });
+
+            // Default cities
+            defaultCities.forEach(c => {
+                if (!favoriteCities.includes(c.name)) {
+                    const btn = createCityPill(c, false);
+                    bar.appendChild(btn);
+                }
+            });
+
+            document.getElementById('favoritesCount').innerText = `⭐ ${favoriteCities.length} Sevimliklar`;
+        }
+
+        function createCityPill(city, isFav) {
+            const btn = document.createElement('button');
+            const isActive = currentCity.name.toLowerCase() === city.name.toLowerCase();
+            btn.className = `glass-pill px-4 py-2 rounded-2xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition ${
+                isActive 
+                    ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold' 
+                    : isFav 
+                        ? 'border-amber-400/50 text-amber-300 font-semibold' 
+                        : 'text-slate-200'
+            }`;
+            btn.innerHTML = `${isFav ? '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>' : ''}${city.name}`;
+            btn.onclick = () => {
+                currentCity = city;
+                fetchWeatherData(city);
+                renderQuickCitiesBar();
+            };
+            return btn;
+        }
+
+        // Toggle Favorites
+        function toggleFavoriteCurrent() {
+            const name = currentCity.name;
+            if (favoriteCities.includes(name)) {
+                favoriteCities = favoriteCities.filter(c => c !== name);
+                showToast(`${name} sevimlilardan olib tashlandi.`);
+            } else {
+                favoriteCities.push(name);
+                showToast(`⭐ ${name} sevimlilar safiga qo'shildi!`, "success");
+            }
+            localStorage.setItem('obhavo_favorites', JSON.stringify(favoriteCities));
+            renderQuickCitiesBar();
+            updateFavoriteButtonUI();
+        }
+
+        function updateFavoriteButtonUI() {
+            const btn = document.getElementById('btnFavorite');
+            const btnMob = document.getElementById('btnFavoriteMobile');
+            const isFav = favoriteCities.includes(currentCity.name);
+
+            if (isFav) {
+                btn.innerHTML = '<i class="fa-solid fa-star text-amber-400 text-lg"></i>';
+                btnMob.innerHTML = '<i class="fa-solid fa-star text-amber-400 text-base"></i>';
+                btn.title = "Sevimlilardan olib tashlash";
+            } else {
+                btn.innerHTML = '<i class="fa-regular fa-star text-lg"></i>';
+                btnMob.innerHTML = '<i class="fa-regular fa-star text-base"></i>';
+                btn.title = "Sevimlilarga qo'shish";
+            }
+        }
+
+        // Temperature Unit Switcher (°C / °F)
+        function setTemperatureUnit(unit, shouldRender = true) {
+            currentUnit = unit;
+            localStorage.setItem('obhavo_unit', unit);
+
+            const activeClass = "px-3.5 py-1.5 rounded-xl font-bold text-xs transition bg-cyan-400 text-slate-950 shadow";
+            const inactiveClass = "px-3.5 py-1.5 rounded-xl font-bold text-xs transition text-slate-300 hover:text-white";
+
+            document.getElementById('btnCelsius').className = unit === 'C' ? activeClass : inactiveClass;
+            document.getElementById('btnFahrenheit').className = unit === 'F' ? activeClass : inactiveClass;
+
+            const activeMob = "px-2 py-1 rounded-xl font-bold bg-cyan-400 text-slate-950";
+            const inactiveMob = "px-2 py-1 rounded-xl font-bold text-slate-300";
+
+            document.getElementById('btnCelsiusMob').className = unit === 'C' ? activeMob : inactiveMob;
+            document.getElementById('btnFahrenheitMob').className = unit === 'F' ? activeMob : inactiveMob;
+
+            if (shouldRender) {
+                renderUI();
+            }
+        }
+
+        function formatTemp(valC) {
+            if (valC === undefined || valC === null) return '--°';
+            if (currentUnit === 'F') {
+                return Math.round((valC * 9/5) + 32) + '°';
+            }
+            return Math.round(valC) + '°';
+        }
+
+        // Fast & Reliable Search Autocomplete using Open-Meteo Geocoding API
+        function setupSearchAutocomplete() {
+            const input = document.getElementById('citySearchInput');
+            const resultsDiv = document.getElementById('searchResults');
+
+            let timer;
+            input.addEventListener('input', (e) => {
+                clearTimeout(timer);
+                const query = e.target.value.trim();
+
+                if (query.length < 2) {
+                    resultsDiv.classList.add('hidden');
+                    return;
+                }
+
+                timer = setTimeout(async () => {
+                    try {
+                        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=uz&format=json`;
+                        const res = await fetch(url);
+                        const data = await res.json();
+
+                        if (data && data.results && data.results.length > 0) {
+                            resultsDiv.innerHTML = data.results.map(item => {
+                                const regionText = [item.admin1, item.country].filter(Boolean).join(', ');
+                                const safeName = item.name.replace(/'/g, "\\'");
+                                const safeRegion = regionText.replace(/'/g, "\\'");
+                                return `
+                                    <div onclick="selectSearchResult('${safeName}', ${item.latitude}, ${item.longitude}, '${safeRegion}')" 
+                                         class="p-3 px-4 text-xs font-medium text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-300 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-none transition">
+                                        <span class="flex items-center gap-2">
+                                            <i class="fa-solid fa-location-dot text-cyan-400"></i>
+                                            <strong class="text-white">${item.name}</strong>
+                                        </span>
+                                        <span class="text-[11px] text-slate-400">${regionText}</span>
+                                    </div>
+                                `;
+                            }).join('');
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            resultsDiv.innerHTML = `<div class="p-3 px-4 text-xs text-slate-400 text-center">Natija topilmadi</div>`;
+                            resultsDiv.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        console.error("Geocoding Error:", err);
+                    }
+                }, 250);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#citySearchInput') && !e.target.closest('#searchResults')) {
+                    resultsDiv.classList.add('hidden');
+                }
+            });
+        }
+
+        async function executeSearch() {
+            const query = document.getElementById('citySearchInput').value.trim();
+            if (!query) return;
+
+            // Check if in preset
+            const preset = defaultCities.find(c => c.name.toLowerCase() === query.toLowerCase());
+            if (preset) {
+                currentCity = preset;
+                fetchWeatherData(preset);
+                document.getElementById('searchResults').classList.add('hidden');
+                document.getElementById('citySearchInput').value = '';
+                return;
+            }
+
+            // Direct geocoding fetch
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=uz&format=json`);
+                const data = await res.json();
+                if (data && data.results && data.results.length > 0) {
+                    const item = data.results[0];
+                    const regionText = [item.admin1, item.country].filter(Boolean).join(', ');
+                    selectSearchResult(item.name, item.latitude, item.longitude, regionText);
+                } else {
+                    showToast("Kechirasiz, bunday shahar topilmadi. Qayta urinib ko'ring.", "warning");
+                }
+            } catch (err) {
+                showToast("Qidiruvda xatolik yuz berdi.", "error");
+            }
+        }
+
+        function selectSearchResult(name, lat, lon, region) {
+            currentCity = { name, lat: parseFloat(lat), lon: parseFloat(lon), region };
+            fetchWeatherData(currentCity);
+            renderQuickCitiesBar();
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('citySearchInput').value = '';
+            showToast(`${name} ob-havosi ko'rsatilmoqda`, "info");
+        }
+
+        // Live User Geolocation with Reverse Geocoding
+        function getUserLocation() {
+            if (!navigator.geolocation) {
+                showToast("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.", "warning");
+                return;
+            }
+
+            showLoading(true);
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    let cityName = "Mening joylashuvim";
+                    let regionName = "O'zbekiston";
+
+                    // Reverse geocoding to retrieve actual city name
+                    try {
+                        const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=uz`);
+                        if (geoRes.ok) {
+                            const geo = await geoRes.json();
+                            cityName = geo.city || geo.locality || geo.principalSubdivision || "Mening joylashuvim";
+                            regionName = geo.countryName || geo.principalSubdivision || "O'zbekiston";
+                        }
+                    } catch (e) {
+                        console.warn("Reverse geocode failed", e);
+                    }
+
+                    currentCity = { name: cityName, lat, lon, region: regionName };
+                    fetchWeatherData(currentCity);
+                    renderQuickCitiesBar();
+                    showToast(`${cityName} ob-havosi aniqlandi!`, "success");
+                },
+                (err) => {
+                    showLoading(false);
+                    showToast("Geolokatsiyani aniqlashga ruxsat berilmadi yoki xatolik yuz berdi.", "error");
+                },
+                { timeout: 10000, enableHighAccuracy: true }
+            );
+        }
+
+        // Sleek Notification Toast
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let icon = 'fa-circle-info text-cyan-400';
+            if (type === 'success') icon = 'fa-circle-check text-emerald-400';
+            if (type === 'warning') icon = 'fa-triangle-exclamation text-amber-400';
+            if (type === 'error') icon = 'fa-circle-exclamation text-rose-400';
+
+            toast.className = "animate-toast glass-panel p-3 px-4 rounded-2xl flex items-center gap-3 shadow-2xl text-xs font-semibold text-white border border-white/20 pointer-events-auto";
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-base"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        // Helpers
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+            document.getElementById('mainWeatherContent').classList.toggle('hidden', show);
+        }
+
+        function formatTime(isoStr) {
+            if (!isoStr) return '--:--';
+            const date = new Date(isoStr);
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function getWindDirectionText(deg) {
+            const directions = ['Shimoliy', 'Shimoli-sharqiy', 'Sharqiy', 'Janubi-sharqiy', 'Janubiy', 'Janubi-g\'arbiy', 'G\'arbiy', 'Shimoli-g\'arbiy'];
+            return directions[Math.round(deg / 45) % 8];
+        }
+
+        function getUvDescription(uv) {
+            if (uv <= 2) return 'Past';
+            if (uv <= 5) return 'O\'rtacha';
+            if (uv <= 7) return 'Yuqori';
+            return 'Juda Yuqori';
+        }
+
+        /* DYNAMIC WEATHER CANVAS PARTICLE SYSTEM (Rain, Snow, Thunder, Twinkling Stars) */
+        let particles = [];
+        function initCanvas() {
+            const canvas = document.getElementById('weatherCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        function startWeatherParticles(type, isDay) {
+            const canvas = document.getElementById('weatherCanvas');
+            const ctx = canvas.getContext('2d');
+            cancelAnimationFrame(animationFrameId);
+
+            particles = [];
+            let particleMode = type;
+            let count = 0;
+
+            if (type === 'rain') {
+                count = 140;
+            } else if (type === 'snow') {
+                count = 90;
+            } else if (!isDay && (type === 'clear' || type === 'clouds')) {
+                particleMode = 'stars';
+                count = 60;
+            }
+
+            for (let i = 0; i < count; i++) {
+                if (particleMode === 'stars') {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height * 0.7,
+                        radius: Math.random() * 1.5 + 0.5,
+                        opacity: Math.random(),
+                        speed: Math.random() * 0.02 + 0.005,
+                        increasing: Math.random() > 0.5
+                    });
+                } else {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        speed: type === 'rain' ? Math.random() * 10 + 12 : Math.random() * 2 + 1,
+                        length: Math.random() * 20 + 10,
+                        radius: Math.random() * 3 + 1,
+                        opacity: Math.random() * 0.5 + 0.3
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (particleMode === 'rain') {
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+                    ctx.lineWidth = 1.5;
+                    particles.forEach(p => {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p.x - 2, p.y + p.length);
+                        ctx.stroke();
+
+                        p.y += p.speed;
+                        p.x -= 1;
+                        if (p.y > canvas.height) {
+                            p.y = -20;
+                            p.x = Math.random() * (canvas.width + 100);
+                        }
+                    });
+                } else if (particleMode === 'snow') {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    particles.forEach(p => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        p.y += p.speed;
+                        p.x += Math.sin(p.y * 0.02) * 0.6;
+                        if (p.y > canvas.height) {
+                            p.y = -10;
+                            p.x = Math.random() * canvas.width;
+                        }
+                    });
+                } else if (particleMode === 'stars') {
+                    particles.forEach(p => {
+                        if (p.increasing) {
+                            p.opacity += p.speed;
+                            if (p.opacity >= 0.9) p.increasing = false;
+                        } else {
+                            p.opacity -= p.speed;
+                            if (p.opacity <= 0.1) p.increasing = true;
+                        }
+                        ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                } else if (type === 'thunder') {
+                    if (Math.random() < 0.015) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+
+                animationFrameId = requestAnimationFrame(animate);
+            }
+
+            if (count > 0 || type === 'thunder') {
+                animate();
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+    </script>
+</body>
+</html>
