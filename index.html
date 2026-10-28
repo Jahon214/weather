@@ -6,7 +6,7 @@
     <title>Ob-Havo Pro — O'zbekiston va Dunyo Ob-Havo Portali</title>
     
     <!-- SEO & OpenGraph Meta Tags -->
-    <meta name="description" content="O'zbekiston viloyatlari va dunyo shaharlarining real vaqtdagi aniq ob-havosi, 24 soatlik va 7 kunlik prognozi, havo sifati (AQI).">
+    <meta name="description" content="O'zbekiston viloyat va tumanlari, Xovos, Guliston hamda dunyo shaharlarining real vaqtdagi aniq ob-havosi, 24 soatlik va 7 kunlik prognozi, havo sifati (AQI).">
     <meta property="og:title" content="Ob-Havo Pro — Mukammal Ob-Havo Portali">
     <meta property="og:description" content="Real vaqtdagi ob-havo ma'lumotlari, jonli grafika va havo sifati.">
     <meta property="og:type" content="website">
@@ -69,7 +69,7 @@
 
         /* Glassmorphism Styles */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(15, 23, 42, 0.68);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.12);
@@ -172,7 +172,7 @@
         }
     </style>
 </head>
-<body id="appBg" class="bg-clear-day text-slate-100 min-h-screen relative p-3 sm:p-6 md:p-8 flex flex-col justify-between">
+<body id="appBg" class="bg-clear-night text-slate-100 min-h-screen relative p-3 sm:p-6 md:p-8 flex flex-col justify-between">
 
     <!-- Canvas for Dynamic Weather Particles (Rain, Snow, Thunder, Twinkling Stars) -->
     <canvas id="weatherCanvas"></canvas>
@@ -197,12 +197,15 @@
                         <h1 class="text-2xl font-extrabold tracking-wide bg-gradient-to-r from-cyan-300 via-white to-amber-300 bg-clip-text text-transparent">
                             Ob-Havo Pro
                         </h1>
-                        <p class="text-xs text-slate-300 font-medium">O'zbekiston va Dunyo Ob-Havo Portali</p>
+                        <p class="text-xs text-slate-300 font-medium">O'zbekiston Viloyat va Tumanlari Portali</p>
                     </div>
                 </div>
 
                 <!-- Mobile Action Buttons -->
                 <div class="flex lg:hidden items-center gap-2">
+                    <button onclick="openDistrictModal()" class="p-2.5 glass-pill rounded-2xl text-cyan-300 active:scale-95" title="Viloyat va tumanlar">
+                        <i class="fa-solid fa-layer-group text-base"></i>
+                    </button>
                     <button onclick="toggleFavoriteCurrent()" id="btnFavoriteMobile" class="p-2.5 glass-pill rounded-2xl text-slate-300 hover:text-amber-300 active:scale-95" title="Sevimlilar">
                         <i class="fa-regular fa-star text-base"></i>
                     </button>
@@ -216,12 +219,12 @@
                 </div>
             </div>
 
-            <!-- Search Form -->
+            <!-- Search Form with Smart Autocomplete -->
             <div class="relative w-full lg:w-[480px]">
                 <div class="relative flex items-center">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 text-slate-400 text-sm"></i>
-                    <input type="text" id="citySearchInput" placeholder="Shahar nomini kiriting (masalan: Samarqand, London)..." 
-                           class="w-full bg-slate-900/80 text-sm text-white placeholder-slate-400 pl-11 pr-28 py-3.5 rounded-2xl border border-white/10 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
+                    <input type="text" id="citySearchInput" placeholder="Tuman yoki shahar nomini yozing (masalan: Xovos, Samarqand)..." 
+                           class="w-full bg-slate-900/85 text-sm text-white placeholder-slate-400 pl-11 pr-28 py-3.5 rounded-2xl border border-white/10 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
                            autocomplete="off"
                            onkeydown="if(event.key === 'Enter') executeSearch()">
                     <button onclick="executeSearch()" class="absolute right-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all active:scale-95">
@@ -232,8 +235,12 @@
                 <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-2 glass-panel rounded-2xl border border-white/15 overflow-hidden shadow-2xl z-50 max-h-72 overflow-y-auto"></div>
             </div>
 
-            <!-- Desktop Controls: Favorite, Geolocation, Refresh & Unit Switcher -->
+            <!-- Desktop Controls: District Modal, Favorite, Geolocation, Refresh & Unit Switcher -->
             <div class="hidden lg:flex items-center gap-3">
+                <button onclick="openDistrictModal()" class="px-3.5 py-3 glass-pill rounded-2xl hover:text-white transition text-cyan-300 flex items-center gap-2 border border-cyan-400/30" title="Barcha viloyat va tumanlar">
+                    <i class="fa-solid fa-layer-group text-base"></i>
+                    <span class="text-xs font-bold">Tumanlar</span>
+                </button>
                 <button onclick="refreshCurrentWeather()" id="btnRefresh" class="p-3.5 glass-pill rounded-2xl hover:text-cyan-300 transition text-slate-300" title="Ob-havoni yangilash">
                     <i class="fa-solid fa-arrows-rotate text-lg"></i>
                 </button>
@@ -242,7 +249,7 @@
                 </button>
                 <button onclick="getUserLocation()" class="p-3.5 glass-pill rounded-2xl hover:text-cyan-300 transition text-slate-300 flex items-center gap-2" title="Mening joylashuvim">
                     <i class="fa-solid fa-location-crosshairs text-lg"></i>
-                    <span class="text-xs font-semibold">Joylashuvim</span>
+                    <span class="text-xs font-semibold">GPS</span>
                 </button>
                 
                 <div class="glass-pill p-1 rounded-2xl flex items-center border border-white/10">
@@ -261,9 +268,14 @@
         <section class="space-y-2">
             <div class="flex items-center justify-between text-xs font-semibold text-slate-300 px-1">
                 <span class="flex items-center gap-2">
-                    <i class="fa-solid fa-map-location-dot text-cyan-400"></i> O'zbekiston Viloyatlari va Dunyo Shaharlari:
+                    <i class="fa-solid fa-map-location-dot text-cyan-400"></i> O'zbekiston Viloyat va Tumanlari:
                 </span>
-                <span id="favoritesCount" class="text-amber-300 font-bold"></span>
+                <div class="flex items-center gap-3">
+                    <button onclick="openDistrictModal()" class="px-3 py-1 glass-pill rounded-xl text-cyan-300 hover:text-white border border-cyan-400/40 text-xs font-bold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-layer-group"></i> Barcha Viloyat va Tumanlar
+                    </button>
+                    <span id="favoritesCount" class="text-amber-300 font-bold hidden sm:inline"></span>
+                </div>
             </div>
             
             <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="quickCitiesBar">
@@ -288,7 +300,7 @@
                     
                     <!-- Decorative Large Weather Icon -->
                     <div id="bgWeatherIcon" class="absolute -right-6 -bottom-6 text-[220px] text-white/5 pointer-events-none select-none">
-                        <i class="fa-solid fa-sun"></i>
+                        <i class="fa-solid fa-moon"></i>
                     </div>
 
                     <!-- Top Row: Location, Time & Condition -->
@@ -296,14 +308,14 @@
                         <div>
                             <div class="flex items-center gap-2 text-cyan-300 font-bold text-base tracking-wide">
                                 <i class="fa-solid fa-location-dot"></i>
-                                <span id="cityName">Toshkent, O'zbekiston</span>
+                                <span id="cityName">Xovos tumani, Sirdaryo viloyati</span>
                             </div>
-                            <p id="currentDate" class="text-xs text-slate-300 font-medium mt-1">Dushanba, 29-Oktyabr</p>
+                            <p id="currentDate" class="text-xs text-slate-300 font-medium mt-1">Payshanba, 29-Oktyabr</p>
                         </div>
 
                         <div id="weatherConditionTag" class="glass-pill px-4 py-2 rounded-full text-xs font-bold text-amber-300 border border-amber-300/30 flex items-center gap-2">
-                            <i id="weatherConditionIcon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
-                            <span id="weatherConditionText">Ochiq, Quyoshli</span>
+                            <i id="weatherConditionIcon" class="fa-solid fa-moon text-amber-400 text-sm"></i>
+                            <span id="weatherConditionText">Ochiq, Oydin tun</span>
                         </div>
                     </div>
 
@@ -311,17 +323,17 @@
                     <div class="my-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 z-10">
                         <div class="flex items-baseline gap-3">
                             <span id="mainTemp" class="text-7xl sm:text-8xl font-black tracking-tight text-white drop-shadow-lg">
-                                22°
+                                11°
                             </span>
                             <div class="flex flex-col text-slate-300 text-xs sm:text-sm font-medium space-y-1">
-                                <span>Hissiyot: <strong id="feelsLikeTemp" class="text-white font-bold">24°</strong></span>
-                                <span>Min/Maks: <strong id="minMaxTemp" class="text-white font-bold">14° / 25°</strong></span>
+                                <span>Hissiyot: <strong id="feelsLikeTemp" class="text-white font-bold">9°</strong></span>
+                                <span>Min/Maks: <strong id="minMaxTemp" class="text-white font-bold">8° / 19°</strong></span>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <div id="heroAnimIcon" class="text-6xl sm:text-7xl text-amber-400 animate-float drop-shadow-2xl">
-                                <i class="fa-solid fa-sun"></i>
+                            <div id="heroAnimIcon" class="text-6xl sm:text-7xl text-cyan-300 animate-float drop-shadow-2xl">
+                                <i class="fa-solid fa-moon"></i>
                             </div>
                         </div>
                     </div>
@@ -335,7 +347,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Namlik</p>
-                                <p id="humidityVal" class="text-sm font-bold text-white">45%</p>
+                                <p id="humidityVal" class="text-sm font-bold text-white">84%</p>
                             </div>
                         </div>
 
@@ -345,7 +357,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Shamol</p>
-                                <p id="windSpeedVal" class="text-sm font-bold text-white">12 km/h (S)</p>
+                                <p id="windSpeedVal" class="text-sm font-bold text-white">14 km/h (SW)</p>
                             </div>
                         </div>
 
@@ -355,7 +367,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Bosim</p>
-                                <p id="pressureVal" class="text-sm font-bold text-white">760 mm Hg</p>
+                                <p id="pressureVal" class="text-sm font-bold text-white">736 mm Hg</p>
                             </div>
                         </div>
 
@@ -365,7 +377,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">UV Indeksi</p>
-                                <p id="uvIndexVal" class="text-sm font-bold text-white">5 (O'rtacha)</p>
+                                <p id="uvIndexVal" class="text-sm font-bold text-white">4 (O'rtacha)</p>
                             </div>
                         </div>
 
@@ -410,7 +422,7 @@
 
                     <div class="flex items-center gap-4 pt-1">
                         <div id="aqiVal" class="text-4xl font-extrabold text-emerald-400">
-                            32
+                            28
                         </div>
                         <div class="space-y-1 text-xs">
                             <p id="aqiStatus" class="font-bold text-white">Havo toza va toza nafas olish uchun mos.</p>
@@ -420,7 +432,7 @@
 
                     <!-- AQI Progress Bar -->
                     <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden relative mt-2">
-                        <div id="aqiBar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-rose-500 rounded-full transition-all duration-1000" style="width: 20%;"></div>
+                        <div id="aqiBar" class="h-full bg-gradient-to-r from-emerald-400 via-yellow-400 to-rose-500 rounded-full transition-all duration-1000" style="width: 25%;"></div>
                     </div>
                 </div>
 
@@ -437,7 +449,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Quyosh chiqishi</p>
-                                <p id="sunriseVal" class="text-xs sm:text-sm font-extrabold text-white">06:48</p>
+                                <p id="sunriseVal" class="text-xs sm:text-sm font-extrabold text-white">06:50</p>
                             </div>
                         </div>
 
@@ -447,7 +459,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Quyosh botishi</p>
-                                <p id="sunsetVal" class="text-xs sm:text-sm font-extrabold text-white">18:22</p>
+                                <p id="sunsetVal" class="text-xs sm:text-sm font-extrabold text-white">17:25</p>
                             </div>
                         </div>
                     </div>
@@ -459,10 +471,10 @@
                             </div>
                             <div>
                                 <p class="text-[11px] text-slate-400 font-medium">Ko'rinuvchanlik</p>
-                                <p id="visibilityVal" class="text-xs sm:text-sm font-bold text-white">10 km</p>
+                                <p id="visibilityVal" class="text-xs sm:text-sm font-bold text-white">12.8 km</p>
                             </div>
                         </div>
-                        <span id="visibilityBadge" class="text-xs text-emerald-400 font-semibold">Tiniq</span>
+                        <span id="visibilityBadge" class="text-xs text-emerald-400 font-semibold">A'lo darajada tiniq</span>
                     </div>
                 </div>
 
@@ -486,11 +498,11 @@
 
         <!-- FOOTER -->
         <footer class="glass-panel p-4 rounded-2xl text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <p>© 2026 Ob-Havo Pro — O'zbekiston va Dunyo Ob-Havo Platformasi</p>
+            <p>© 2026 Ob-Havo Pro — O'zbekiston Viloyat va Tumanlari Platformasi</p>
             <div class="flex items-center gap-4 text-slate-300 font-medium">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> Open-Meteo Real-Time API</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-400"></i> Open-Meteo Real-Time Weather API</span>
                 <span class="text-slate-600">|</span>
-                <a href="https://github.com/Jahon214" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition flex items-center gap-1.5">
+                <a href="https://github.com/Jahon214/weather" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition flex items-center gap-1.5">
                     <i class="fa-brands fa-github text-white"></i> GitHub
                 </a>
             </div>
@@ -498,49 +510,212 @@
 
     </div>
 
+    <!-- DISTRICT & REGION SELECTOR MODAL -->
+    <div id="districtModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+        <div class="glass-panel w-full max-w-4xl max-h-[88vh] rounded-3xl p-5 sm:p-7 flex flex-col space-y-4 border border-white/20 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-lg shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white">O'zbekiston Viloyat va Tumanlari</h3>
+                        <p class="text-xs text-slate-300">O'zingiz yashaydigan tuman yoki shaharni bitta klik bilan tanlang</p>
+                    </div>
+                </div>
+                <button onclick="closeDistrictModal()" class="p-2 px-3 rounded-xl glass-pill hover:text-rose-400 text-slate-300 transition" title="Yopish">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Region selector tabs -->
+            <div id="modalRegionTabs" class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-white/10 text-xs font-semibold shrink-0">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- District Pills Container -->
+            <div id="modalDistrictsContainer" class="flex-1 overflow-y-auto p-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
 
     <!-- JAVASCRIPT LOGIC & API INTEGRATION -->
     <script>
-        // Preset Uzbekistan Regions & Top Global Metropolises
+        // Comprehensive Database of Uzbekistan Regions and All Districts
+        const uzbekistanRegionsData = {
+            "Sirdaryo viloyati": [
+                { name: "Xovos tumani", shortName: "Xovos", lat: 40.2158, lon: 68.8414 },
+                { name: "Guliston shahri", shortName: "Guliston", lat: 40.4897, lon: 68.7842 },
+                { name: "Yangiyer shahri", shortName: "Yangiyer", lat: 40.2644, lon: 68.8189 },
+                { name: "Shirin shahri", shortName: "Shirin", lat: 40.2222, lon: 69.1708 },
+                { name: "Boyovut tumani", shortName: "Boyovut", lat: 40.3833, lon: 69.0500 },
+                { name: "Sardoba tumani", shortName: "Sardoba", lat: 40.2167, lon: 68.4667 },
+                { name: "Sayxunobod tumani", shortName: "Sayxunobod", lat: 40.6667, lon: 68.9167 },
+                { name: "Mirzaobod tumani", shortName: "Mirzaobod", lat: 40.4667, lon: 68.6167 },
+                { name: "Oqoltin tumani", shortName: "Oqoltin", lat: 40.4500, lon: 68.2500 }
+            ],
+            "Toshkent shahri": [
+                { name: "Toshkent (Markaz)", shortName: "Toshkent", lat: 41.2995, lon: 69.2401 },
+                { name: "Yunusobod", shortName: "Yunusobod", lat: 41.3644, lon: 69.2872 },
+                { name: "Chilonzor", shortName: "Chilonzor", lat: 41.2722, lon: 69.2044 },
+                { name: "Mirzo Ulug'bek", shortName: "Mirzo Ulug'bek", lat: 41.3283, lon: 69.3333 },
+                { name: "Shayxontohur", shortName: "Shayxontohur", lat: 41.3200, lon: 69.2400 },
+                { name: "Mirobod", shortName: "Mirobod", lat: 41.2917, lon: 69.2833 },
+                { name: "Yakkasaroy", shortName: "Yakkasaroy", lat: 41.2750, lon: 69.2500 },
+                { name: "Sergeli", shortName: "Sergeli", lat: 41.2222, lon: 69.2194 },
+                { name: "Olmazor", shortName: "Olmazor", lat: 41.3500, lon: 69.2167 },
+                { name: "Yashnobod", shortName: "Yashnobod", lat: 41.2917, lon: 69.3333 }
+            ],
+            "Toshkent viloyati": [
+                { name: "Nurafshon shahri", shortName: "Nurafshon", lat: 41.0422, lon: 69.3561 },
+                { name: "Chirchiq shahri", shortName: "Chirchiq", lat: 41.4689, lon: 69.5822 },
+                { name: "Olmaliq shahri", shortName: "Olmaliq", lat: 40.8444, lon: 69.5986 },
+                { name: "Angren shahri", shortName: "Angren", lat: 41.0167, lon: 70.1436 },
+                { name: "Bekobod shahri", shortName: "Bekobod", lat: 40.2197, lon: 69.2486 },
+                { name: "Yangiyo'l shahri", shortName: "Yangiyo'l", lat: 41.1167, lon: 69.0500 },
+                { name: "Bo'ka tumani", shortName: "Bo'ka", lat: 40.8167, lon: 69.3167 },
+                { name: "Chinoz tumani", shortName: "Chinoz", lat: 40.9333, lon: 68.7500 },
+                { name: "Parkent tumani", shortName: "Parkent", lat: 41.2944, lon: 69.6764 },
+                { name: "G'azalkent (Bo'stonliq)", shortName: "G'azalkent", lat: 41.5667, lon: 69.7667 }
+            ],
+            "Samarqand viloyati": [
+                { name: "Samarqand shahri", shortName: "Samarqand", lat: 39.6542, lon: 66.9597 },
+                { name: "Kattaqo'rg'on shahri", shortName: "Kattaqo'rg'on", lat: 39.8978, lon: 66.2558 },
+                { name: "Urgut tumani", shortName: "Urgut", lat: 39.4042, lon: 67.2431 },
+                { name: "Jomboy tumani", shortName: "Jomboy", lat: 39.6975, lon: 67.0903 },
+                { name: "Bulung'ur tumani", shortName: "Bulung'ur", lat: 39.7583, lon: 67.2722 },
+                { name: "Ishtixon tumani", shortName: "Ishtixon", lat: 39.9639, lon: 66.4889 },
+                { name: "Pastdarg'om (Juma)", shortName: "Pastdarg'om", lat: 39.7167, lon: 66.6500 }
+            ],
+            "Buxoro viloyati": [
+                { name: "Buxoro shahri", shortName: "Buxoro", lat: 39.7747, lon: 64.4286 },
+                { name: "G'ijduvon tumani", shortName: "G'ijduvon", lat: 40.1000, lon: 64.6667 },
+                { name: "Kogon shahri", shortName: "Kogon", lat: 39.7228, lon: 64.5447 },
+                { name: "Qorako'l tumani", shortName: "Qorako'l", lat: 39.5000, lon: 63.8500 },
+                { name: "Vobkent tumani", shortName: "Vobkent", lat: 40.0333, lon: 64.5167 }
+            ],
+            "Farg'ona viloyati": [
+                { name: "Farg'ona shahri", shortName: "Farg'ona", lat: 40.3842, lon: 71.7843 },
+                { name: "Qo'qon shahri", shortName: "Qo'qon", lat: 40.5333, lon: 70.9333 },
+                { name: "Marg'ilon shahri", shortName: "Marg'ilon", lat: 40.4722, lon: 71.7247 },
+                { name: "Quva tumani", shortName: "Quva", lat: 40.5222, lon: 72.0722 },
+                { name: "Rishton tumani", shortName: "Rishton", lat: 40.3556, lon: 71.2833 },
+                { name: "Oltiariq tumani", shortName: "Oltiariq", lat: 40.3833, lon: 71.4833 }
+            ],
+            "Andijon viloyati": [
+                { name: "Andijon shahri", shortName: "Andijon", lat: 40.7821, lon: 72.3442 },
+                { name: "Asaka shahri", shortName: "Asaka", lat: 40.6414, lon: 72.2386 },
+                { name: "Xonobod shahri", shortName: "Xonobod", lat: 40.8039, lon: 72.9986 },
+                { name: "Shahrixon tumani", shortName: "Shahrixon", lat: 40.7111, lon: 72.0556 },
+                { name: "Qo'rg'ontepa tumani", shortName: "Qo'rg'ontepa", lat: 40.7333, lon: 72.7667 }
+            ],
+            "Namangan viloyati": [
+                { name: "Namangan shahri", shortName: "Namangan", lat: 40.9983, lon: 71.6726 },
+                { name: "Chust tumani", shortName: "Chust", lat: 41.0069, lon: 71.2289 },
+                { name: "Kosonsoy tumani", shortName: "Kosonsoy", lat: 41.2556, lon: 71.5500 },
+                { name: "Pop tumani", shortName: "Pop", lat: 40.8722, lon: 71.1083 }
+            ],
+            "Jizzax viloyati": [
+                { name: "Jizzax shahri", shortName: "Jizzax", lat: 40.1158, lon: 67.8422 },
+                { name: "Zomin tumani", shortName: "Zomin", lat: 39.9606, lon: 68.4950 },
+                { name: "G'allaorol tumani", shortName: "G'allaorol", lat: 40.0167, lon: 67.5833 },
+                { name: "Paxtakor tumani", shortName: "Paxtakor", lat: 40.3167, lon: 67.9500 }
+            ],
+            "Qashqadaryo viloyati": [
+                { name: "Qarshi shahri", shortName: "Qarshi", lat: 38.8605, lon: 65.7890 },
+                { name: "Shahrisabz shahri", shortName: "Shahrisabz", lat: 39.0500, lon: 66.8333 },
+                { name: "Koson tumani", shortName: "Koson", lat: 39.0333, lon: 65.5833 },
+                { name: "Kitob tumani", shortName: "Kitob", lat: 39.1333, lon: 66.8833 }
+            ],
+            "Surxondaryo viloyati": [
+                { name: "Termiz shahri", shortName: "Termiz", lat: 37.2242, lon: 67.2783 },
+                { name: "Denov tumani", shortName: "Denov", lat: 38.2764, lon: 67.8986 },
+                { name: "Sherobod tumani", shortName: "Sherobod", lat: 37.6667, lon: 67.0000 },
+                { name: "Boysun tumani", shortName: "Boysun", lat: 38.2000, lon: 67.2000 }
+            ],
+            "Xorazm viloyati": [
+                { name: "Urganch shahri", shortName: "Urganch", lat: 41.5500, lon: 60.6333 },
+                { name: "Xiva shahri", shortName: "Xiva", lat: 41.3783, lon: 60.3639 },
+                { name: "Shovot tumani", shortName: "Shovot", lat: 41.6667, lon: 60.3000 }
+            ],
+            "Navoiy viloyati": [
+                { name: "Navoiy shahri", shortName: "Navoiy", lat: 40.0844, lon: 65.3792 },
+                { name: "Zarafshon shahri", shortName: "Zarafshon", lat: 41.5742, lon: 64.2003 },
+                { name: "Qiziltepa tumani", shortName: "Qiziltepa", lat: 40.0333, lon: 64.8167 }
+            ],
+            "Qoraqalpog'iston": [
+                { name: "Nukus shahri", shortName: "Nukus", lat: 42.4603, lon: 59.6180 },
+                { name: "Qo'ng'irot tumani", shortName: "Qo'ng'irot", lat: 43.0833, lon: 58.8500 },
+                { name: "Beruniy tumani", shortName: "Beruniy", lat: 41.6833, lon: 60.7500 },
+                { name: "To'rtko'l tumani", shortName: "To'rtko'l", lat: 41.5500, lon: 61.0000 },
+                { name: "Mo'ynoq tumani", shortName: "Mo'ynoq", lat: 43.7667, lon: 59.0333 }
+            ]
+        };
+
+        // Flat database for instant 0ms search
+        const flatDistrictsList = [];
+        for (const [regionName, districts] of Object.entries(uzbekistanRegionsData)) {
+            districts.forEach(d => {
+                flatDistrictsList.push({
+                    name: d.name,
+                    shortName: d.shortName,
+                    lat: d.lat,
+                    lon: d.lon,
+                    region: regionName
+                });
+            });
+        }
+
+        // Quick Selector Featured Cities & Regions
         const defaultCities = [
-            { name: "Toshkent", lat: 41.2995, lon: 69.2401, region: "Toshkent shahri" },
-            { name: "Samarqand", lat: 39.6542, lon: 66.9597, region: "Samarqand viloyati" },
-            { name: "Buxoro", lat: 39.7747, lon: 64.4286, region: "Buxoro viloyati" },
-            { name: "Andijon", lat: 40.7821, lon: 72.3442, region: "Andijon viloyati" },
-            { name: "Namangan", lat: 40.9983, lon: 71.6726, region: "Namangan viloyati" },
-            { name: "Farg'ona", lat: 40.3842, lon: 71.7843, region: "Farg'ona viloyati" },
-            { name: "Qarshi", lat: 38.8605, lon: 65.7890, region: "Qashqadaryo viloyati" },
-            { name: "Termiz", lat: 37.2242, lon: 67.2783, region: "Surxondaryo viloyati" },
-            { name: "Urganch", lat: 41.5500, lon: 60.6333, region: "Xorazm viloyati" },
-            { name: "Nukus", lat: 42.4603, lon: 59.6180, region: "Qoraqalpog'iston" },
-            { name: "Jizzax", lat: 40.1158, lon: 67.8422, region: "Jizzax viloyati" },
-            { name: "Guliston", lat: 40.4897, lon: 68.7842, region: "Sirdaryo viloyati" },
-            { name: "Navoiy", lat: 40.0844, lon: 65.3792, region: "Navoiy viloyati" },
-            { name: "Nurafshon", lat: 41.0422, lon: 69.3561, region: "Toshkent viloyati" },
-            { name: "Istanbul", lat: 41.0082, lon: 28.9784, region: "Turkiya" },
-            { name: "London", lat: 51.5074, lon: -0.1278, region: "Buyuk Britaniya" },
-            { name: "Moskva", lat: 55.7558, lon: 37.6173, region: "Rossiya" },
-            { name: "Dubay", lat: 25.2048, lon: 55.2708, region: "BAA" },
-            { name: "New York", lat: 40.7128, lon: -74.0060, region: "AQSH" },
-            { name: "Tokyo", lat: 35.6762, lon: 139.6503, region: "Yaponiya" }
+            { name: "Xovos", fullName: "Xovos tumani", lat: 40.2158, lon: 68.8414, region: "Sirdaryo viloyati" },
+            { name: "Guliston", fullName: "Guliston shahri", lat: 40.4897, lon: 68.7842, region: "Sirdaryo viloyati" },
+            { name: "Yangiyer", fullName: "Yangiyer shahri", lat: 40.2644, lon: 68.8189, region: "Sirdaryo viloyati" },
+            { name: "Toshkent", fullName: "Toshkent shahri", lat: 41.2995, lon: 69.2401, region: "Toshkent shahri" },
+            { name: "Samarqand", fullName: "Samarqand shahri", lat: 39.6542, lon: 66.9597, region: "Samarqand viloyati" },
+            { name: "Buxoro", fullName: "Buxoro shahri", lat: 39.7747, lon: 64.4286, region: "Buxoro viloyati" },
+            { name: "Andijon", fullName: "Andijon shahri", lat: 40.7821, lon: 72.3442, region: "Andijon viloyati" },
+            { name: "Namangan", fullName: "Namangan shahri", lat: 40.9983, lon: 71.6726, region: "Namangan viloyati" },
+            { name: "Farg'ona", fullName: "Farg'ona shahri", lat: 40.3842, lon: 71.7843, region: "Farg'ona viloyati" },
+            { name: "Qarshi", fullName: "Qarshi shahri", lat: 38.8605, lon: 65.7890, region: "Qashqadaryo viloyati" },
+            { name: "Termiz", fullName: "Termiz shahri", lat: 37.2242, lon: 67.2783, region: "Surxondaryo viloyati" },
+            { name: "Urganch", fullName: "Urganch shahri", lat: 41.5500, lon: 60.6333, region: "Xorazm viloyati" },
+            { name: "Nukus", fullName: "Nukus shahri", lat: 42.4603, lon: 59.6180, region: "Qoraqalpog'iston" },
+            { name: "Jizzax", fullName: "Jizzax shahri", lat: 40.1158, lon: 67.8422, region: "Jizzax viloyati" },
+            { name: "Navoiy", fullName: "Navoiy shahri", lat: 40.0844, lon: 65.3792, region: "Navoiy viloyati" },
+            { name: "Nurafshon", fullName: "Nurafshon shahri", lat: 41.0422, lon: 69.3561, region: "Toshkent viloyati" }
         ];
 
-        // State Variables
+        // Safe State Initialization (Cleans any junk from older test runs)
         let savedCity = null;
         try {
-            savedCity = JSON.parse(localStorage.getItem('obhavo_last_city'));
-        } catch (e) {}
+            const raw = localStorage.getItem('obhavo_last_city');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.name && parsed.name !== 'Africa' && parsed.lat && parsed.lon) {
+                    savedCity = parsed;
+                } else {
+                    localStorage.removeItem('obhavo_last_city');
+                }
+            }
+        } catch (e) {
+            localStorage.removeItem('obhavo_last_city');
+        }
 
+        // Default: Sirdaryo viloyati, Xovos tumani
         let currentCity = savedCity || defaultCities[0];
         let currentUnit = localStorage.getItem('obhavo_unit') || 'C';
         let currentWeatherData = null;
-        let favoriteCities = JSON.parse(localStorage.getItem('obhavo_favorites')) || ['Toshkent', 'Samarqand', 'Buxoro'];
+        let favoriteCities = JSON.parse(localStorage.getItem('obhavo_favorites')) || ['Xovos', 'Guliston', 'Toshkent'];
         let chartInstance = null;
         let animationFrameId = null;
+        let activeModalRegion = "Sirdaryo viloyati";
 
-        // WMO Weather Interpretation Codes (Standardized Day & Night definitions)
+        // WMO Weather Interpretation Codes (Day & Night)
         const wmoCodeMap = {
             0: { dayText: "Ochiq, Quyoshli", nightText: "Ochiq, Oydin tun", condition: "clear", dayIcon: "fa-sun", nightIcon: "fa-moon", color: "text-amber-400" },
             1: { dayText: "Asosan ochiq", nightText: "Asosan ochiq tun", condition: "clear", dayIcon: "fa-cloud-sun", nightIcon: "fa-cloud-moon", color: "text-amber-300" },
@@ -562,6 +737,31 @@
             96: { dayText: "Momaqaldiroq va do'l", nightText: "Momaqaldiroq va do'l", condition: "thunder", dayIcon: "fa-cloud-bolt", nightIcon: "fa-cloud-bolt", color: "text-purple-300" }
         };
 
+        // Cyrillic to Latin Transliteration for Uzbek
+        function cyrillicToLatin(text) {
+            const map = {
+                'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+                'ж': 'j', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+                'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+                'ф': 'f', 'х': 'x', 'ҳ': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh',
+                'ъ': "'", 'ы': 'i', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+                'ў': "o'", 'қ': 'q', 'ғ': "g'",
+                'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'E': 'E', 'Ё': 'Yo',
+                'Ж': 'J', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+                'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+                'Ф': 'F', 'Х': 'X', 'Ҳ': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sh',
+                'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya', 'Ў': "O'", 'Қ': 'Q', 'Ғ': "G'"
+            };
+            return text.split('').map(ch => map[ch] !== undefined ? map[ch] : ch).join('');
+        }
+
+        // Clean Search Query helper
+        function cleanQuery(str) {
+            let latin = cyrillicToLatin(str).trim();
+            latin = latin.replace(/\s*(tumani|shahri|viloyati|district|city|region)\b/gi, '').trim();
+            return latin;
+        }
+
         // App Initialization
         window.addEventListener('load', () => {
             initCanvas();
@@ -570,17 +770,17 @@
             setTemperatureUnit(currentUnit, false);
             fetchWeatherData(currentCity);
             setupSearchAutocomplete();
-
-            // Auto-detect location on first visit if user hasn't selected a custom city yet
-            if (!savedCity) {
-                getUserLocation(true);
-            }
+            initDistrictModal();
 
             // Keyboard shortcut '/' to search
             window.addEventListener('keydown', (e) => {
                 if (e.key === '/' && document.activeElement.id !== 'citySearchInput') {
                     e.preventDefault();
                     document.getElementById('citySearchInput').focus();
+                }
+                if (e.key === 'Escape') {
+                    closeDistrictModal();
+                    document.getElementById('searchResults').classList.add('hidden');
                 }
             });
         });
@@ -617,13 +817,13 @@
                     aqi: aqiRes
                 };
 
-                // Remember selected city in localStorage
+                // Save selected city safely in localStorage
                 localStorage.setItem('obhavo_last_city', JSON.stringify(city));
 
                 renderUI();
             } catch (err) {
                 console.error("Fetch Error:", err);
-                showToast("Ob-havo ma'lumotlarini yuklashda xatolik yuz berdi. Internet aloqasini tekshiring.", "error");
+                showToast("Ob-havo ma'lumotlarini yuklashda xatolik yuz berdi. Qayta urinib ko'ring.", "error");
             } finally {
                 showLoading(false);
             }
@@ -651,8 +851,12 @@
             const hourly = weather.hourly;
             const isDay = current.is_day === 1;
 
-            // City Title & Favorite Status
-            document.getElementById('cityName').innerText = `${city.name}, ${city.region || "O'zbekiston"}`;
+            // City Title & Clean Location Name
+            let locationTitle = city.fullName || city.name;
+            if (city.region && !locationTitle.includes(city.region)) {
+                locationTitle = `${locationTitle}, ${city.region}`;
+            }
+            document.getElementById('cityName').innerText = locationTitle;
             updateFavoriteButtonUI();
 
             // Weather Condition
@@ -724,7 +928,7 @@
         // Theme & Gradient Background with Day/Night awareness
         function setThemeBackground(condition, isDay) {
             const bgElement = document.getElementById('appBg');
-            let bgClass = 'bg-clear-day';
+            let bgClass = 'bg-clear-night';
 
             if (condition === 'clear') {
                 bgClass = isDay ? 'bg-clear-day' : 'bg-clear-night';
@@ -789,20 +993,15 @@
             const container = document.getElementById('hourlyContainer');
             container.innerHTML = '';
 
-            // Find current time index in hourly.time array
             const now = new Date();
-            const currentIsoDate = now.toISOString().slice(0, 10);
             const currentHour = now.getHours();
 
             let startIndex = hourly.time.findIndex(t => {
                 const itemDate = new Date(t);
-                return itemDate.getHours() === currentHour && t.startsWith(currentIsoDate);
+                return itemDate.getHours() === currentHour;
             });
 
-            if (startIndex === -1) {
-                startIndex = currentHour;
-            }
-            if (startIndex < 0 || startIndex + 24 > hourly.time.length) {
+            if (startIndex === -1 || startIndex + 24 > hourly.time.length) {
                 startIndex = 0;
             }
 
@@ -823,7 +1022,7 @@
                 tempsFormatted.push(currentUnit === 'F' ? Math.round((rawTemp * 9/5) + 32) : Math.round(rawTemp));
 
                 const code = codesSlice[idx];
-                const isItemDay = hourNum >= 6 && hourNum < 19;
+                const isItemDay = hourNum >= 6 && hourNum < 18;
                 const wInfo = wmoCodeMap[code] || wmoCodeMap[0];
                 const icon = isItemDay ? wInfo.dayIcon : wInfo.nightIcon;
 
@@ -942,7 +1141,9 @@
 
             // Favorites first
             favoriteCities.forEach(favName => {
-                const cityObj = defaultCities.find(c => c.name.toLowerCase() === favName.toLowerCase()) || { name: favName, lat: 41.2995, lon: 69.2401, region: "Sevimli" };
+                const cityObj = flatDistrictsList.find(c => c.shortName.toLowerCase() === favName.toLowerCase() || c.name.toLowerCase() === favName.toLowerCase())
+                             || defaultCities.find(c => c.name.toLowerCase() === favName.toLowerCase())
+                             || { name: favName, lat: 40.2158, lon: 68.8414, region: "Sevimli" };
                 const btn = createCityPill(cityObj, true);
                 bar.appendChild(btn);
             });
@@ -960,27 +1161,32 @@
 
         function createCityPill(city, isFav) {
             const btn = document.createElement('button');
-            const isActive = currentCity.name.toLowerCase() === city.name.toLowerCase();
+            const isActive = currentCity.name.toLowerCase() === city.name.toLowerCase() || (currentCity.shortName && currentCity.shortName.toLowerCase() === city.name.toLowerCase());
             btn.className = `glass-pill px-4 py-2 rounded-2xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5 transition ${
                 isActive 
-                    ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300 font-bold' 
+                    ? 'border-cyan-400 bg-cyan-500/25 text-cyan-300 font-bold shadow-lg shadow-cyan-500/10' 
                     : isFav 
                         ? 'border-amber-400/50 text-amber-300 font-semibold' 
                         : 'text-slate-200'
             }`;
             btn.innerHTML = `${isFav ? '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>' : ''}${city.name}`;
             btn.onclick = () => {
-                currentCity = city;
-                localStorage.setItem('obhavo_last_city', JSON.stringify(city));
-                fetchWeatherData(city);
-                renderQuickCitiesBar();
+                selectLocation(city);
             };
             return btn;
         }
 
+        function selectLocation(city) {
+            currentCity = city;
+            localStorage.setItem('obhavo_last_city', JSON.stringify(city));
+            fetchWeatherData(city);
+            renderQuickCitiesBar();
+            showToast(`📍 ${city.fullName || city.name} tanlandi`, "success");
+        }
+
         // Toggle Favorites
         function toggleFavoriteCurrent() {
-            const name = currentCity.name;
+            const name = currentCity.shortName || currentCity.name;
             if (favoriteCities.includes(name)) {
                 favoriteCities = favoriteCities.filter(c => c !== name);
                 showToast(`${name} sevimlilardan olib tashlandi.`);
@@ -996,7 +1202,8 @@
         function updateFavoriteButtonUI() {
             const btn = document.getElementById('btnFavorite');
             const btnMob = document.getElementById('btnFavoriteMobile');
-            const isFav = favoriteCities.includes(currentCity.name);
+            const name = currentCity.shortName || currentCity.name;
+            const isFav = favoriteCities.includes(name);
 
             if (isFav) {
                 btn.innerHTML = '<i class="fa-solid fa-star text-amber-400 text-lg"></i>';
@@ -1039,7 +1246,7 @@
             return Math.round(valC) + '°';
         }
 
-        // Fast & Reliable Search Autocomplete using Open-Meteo Geocoding API
+        // Smart Search Autocomplete: checks internal Uzbekistan DB first, then Open-Meteo
         function setupSearchAutocomplete() {
             const input = document.getElementById('citySearchInput');
             const resultsDiv = document.getElementById('searchResults');
@@ -1047,38 +1254,57 @@
             let timer;
             input.addEventListener('input', (e) => {
                 clearTimeout(timer);
-                const query = e.target.value.trim();
+                const rawQuery = e.target.value.trim();
 
-                if (query.length < 2) {
+                if (rawQuery.length < 2) {
                     resultsDiv.classList.add('hidden');
                     return;
                 }
 
+                const cleaned = cleanQuery(rawQuery).toLowerCase();
+
+                // 1. Search in local Uzbekistan districts database (0ms latency, handles Cyrillic & typos)
+                const localMatches = flatDistrictsList.filter(d => 
+                    d.name.toLowerCase().includes(cleaned) ||
+                    d.shortName.toLowerCase().includes(cleaned) ||
+                    d.region.toLowerCase().includes(cleaned)
+                ).slice(0, 5);
+
+                if (localMatches.length > 0) {
+                    renderSearchResults(localMatches, resultsDiv);
+                    resultsDiv.classList.remove('hidden');
+                }
+
                 timer = setTimeout(async () => {
                     try {
-                        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=uz&format=json`;
+                        // 2. Query Open-Meteo geocoding prioritizing Uzbekistan
+                        const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleaned)}&count=6&language=uz&format=json`;
                         const res = await fetch(url);
                         const data = await res.json();
 
+                        let externalResults = [];
                         if (data && data.results && data.results.length > 0) {
-                            resultsDiv.innerHTML = data.results.map(item => {
-                                const regionText = [item.admin1, item.country].filter(Boolean).join(', ');
-                                const safeName = item.name.replace(/'/g, "\\'");
-                                const safeRegion = regionText.replace(/'/g, "\\'");
-                                return `
-                                    <div onclick="selectSearchResult('${safeName}', ${item.latitude}, ${item.longitude}, '${safeRegion}')" 
-                                         class="p-3 px-4 text-xs font-medium text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-300 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-none transition">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-location-dot text-cyan-400"></i>
-                                            <strong class="text-white">${item.name}</strong>
-                                        </span>
-                                        <span class="text-[11px] text-slate-400">${regionText}</span>
-                                    </div>
-                                `;
-                            }).join('');
+                            externalResults = data.results.map(item => ({
+                                name: item.name,
+                                lat: item.latitude,
+                                lon: item.longitude,
+                                region: [item.admin1, item.country].filter(Boolean).join(', ')
+                            }));
+                        }
+
+                        // Combine, putting Uzbekistan results first
+                        const combined = [...localMatches];
+                        externalResults.forEach(ext => {
+                            if (!combined.some(c => Math.abs(c.lat - ext.lat) < 0.05 && Math.abs(c.lon - ext.lon) < 0.05)) {
+                                combined.push(ext);
+                            }
+                        });
+
+                        if (combined.length > 0) {
+                            renderSearchResults(combined.slice(0, 7), resultsDiv);
                             resultsDiv.classList.remove('hidden');
                         } else {
-                            resultsDiv.innerHTML = `<div class="p-3 px-4 text-xs text-slate-400 text-center">Natija topilmadi</div>`;
+                            resultsDiv.innerHTML = `<div class="p-3 px-4 text-xs text-slate-400 text-center">Natija topilmadi. Qayta yozib ko'ring.</div>`;
                             resultsDiv.classList.remove('hidden');
                         }
                     } catch (err) {
@@ -1094,30 +1320,55 @@
             });
         }
 
-        async function executeSearch() {
-            const query = document.getElementById('citySearchInput').value.trim();
-            if (!query) return;
+        function renderSearchResults(items, container) {
+            container.innerHTML = items.map(item => {
+                const isUz = (item.region && (item.region.includes('viloyati') || item.region.includes('shahri') || item.region.includes("O'zbekiston") || item.region.includes("O‘zbekiston")));
+                const safeName = item.name.replace(/'/g, "\\'");
+                const safeRegion = (item.region || '').replace(/'/g, "\\'");
+                return `
+                    <div onclick="selectSearchResult('${safeName}', ${item.lat}, ${item.lon}, '${safeRegion}')" 
+                         class="p-3 px-4 text-xs font-medium text-slate-200 hover:bg-cyan-500/20 hover:text-cyan-300 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-none transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-cyan-400"></i>
+                            <strong class="text-white">${item.name}</strong>
+                            ${isUz ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 font-bold">UZ</span>' : ''}
+                        </span>
+                        <span class="text-[11px] text-slate-400">${item.region || ''}</span>
+                    </div>
+                `;
+            }).join('');
+        }
 
-            // Check if in preset
-            const preset = defaultCities.find(c => c.name.toLowerCase() === query.toLowerCase());
-            if (preset) {
-                currentCity = preset;
-                fetchWeatherData(preset);
-                document.getElementById('searchResults').classList.add('hidden');
-                document.getElementById('citySearchInput').value = '';
+        async function executeSearch() {
+            const input = document.getElementById('citySearchInput');
+            const rawQuery = input.value.trim();
+            if (!rawQuery) return;
+
+            const cleaned = cleanQuery(rawQuery).toLowerCase();
+
+            // Match local districts first
+            const match = flatDistrictsList.find(d => 
+                d.name.toLowerCase() === cleaned || 
+                d.shortName.toLowerCase() === cleaned ||
+                d.name.toLowerCase().startsWith(cleaned)
+            );
+
+            if (match) {
+                selectSearchResult(match.name, match.lat, match.lon, match.region);
                 return;
             }
 
-            // Direct geocoding fetch
+            // Fallback to Open-Meteo
             try {
-                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=uz&format=json`);
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleaned)}&count=3&language=uz&format=json`);
                 const data = await res.json();
                 if (data && data.results && data.results.length > 0) {
-                    const item = data.results[0];
-                    const regionText = [item.admin1, item.country].filter(Boolean).join(', ');
-                    selectSearchResult(item.name, item.latitude, item.longitude, regionText);
+                    // Prioritize Uzbekistan results
+                    const uzResult = data.results.find(r => r.country_code === 'UZ') || data.results[0];
+                    const regionText = [uzResult.admin1, uzResult.country].filter(Boolean).join(', ');
+                    selectSearchResult(uzResult.name, uzResult.latitude, uzResult.longitude, regionText);
                 } else {
-                    showToast("Kechirasiz, bunday shahar topilmadi. Qayta urinib ko'ring.", "warning");
+                    showToast("Bunday shahar topilmadi. 'Barcha tumanlar' tugmasidan foydalaning.", "warning");
                 }
             } catch (err) {
                 showToast("Qidiruvda xatolik yuz berdi.", "error");
@@ -1125,34 +1376,25 @@
         }
 
         function selectSearchResult(name, lat, lon, region) {
-            currentCity = { name, lat: parseFloat(lat), lon: parseFloat(lon), region };
-            localStorage.setItem('obhavo_last_city', JSON.stringify(currentCity));
-            fetchWeatherData(currentCity);
-            renderQuickCitiesBar();
+            selectLocation({ name, lat: parseFloat(lat), lon: parseFloat(lon), region });
             document.getElementById('searchResults').classList.add('hidden');
             document.getElementById('citySearchInput').value = '';
-            showToast(`${name} ob-havosi ko'rsatilmoqda`, "info");
         }
 
         // Live User Geolocation with Reverse Geocoding
-        function getUserLocation(isAutoOnLoad = false) {
+        function getUserLocation() {
             if (!navigator.geolocation) {
-                if (!isAutoOnLoad) {
-                    showToast("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.", "warning");
-                }
+                showToast("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.", "warning");
                 return;
             }
 
-            if (!isAutoOnLoad) {
-                showLoading(true);
-            }
-
+            showLoading(true);
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
-                    let cityName = "Mening joylashuvim";
-                    let regionName = "O'zbekiston";
+                    let cityName = "Xovos";
+                    let regionName = "Sirdaryo viloyati";
 
                     // Reverse geocoding to retrieve actual city & region name
                     try {
@@ -1161,36 +1403,92 @@
                             const geo = await geoRes.json();
                             if (geo.principalSubdivision) {
                                 regionName = geo.principalSubdivision;
-                            } else if (geo.countryName) {
-                                regionName = geo.countryName;
                             }
-
                             if (geo.city) {
-                                cityName = geo.city.replace(/\s*(tumani|shahri|district|city)\b/gi, '').trim() || geo.city;
+                                cityName = geo.city;
                             } else if (geo.locality) {
-                                cityName = geo.locality.replace(/\s*(tumani|shahri|district|city)\b/gi, '').trim() || geo.locality;
-                            } else if (geo.principalSubdivision) {
-                                cityName = geo.principalSubdivision.replace(/\s*(viloyati|region)\b/gi, '').trim() || geo.principalSubdivision;
+                                cityName = geo.locality;
                             }
                         }
                     } catch (e) {
                         console.warn("Reverse geocode failed", e);
                     }
 
-                    currentCity = { name: cityName, lat, lon, region: regionName };
-                    localStorage.setItem('obhavo_last_city', JSON.stringify(currentCity));
-                    fetchWeatherData(currentCity);
-                    renderQuickCitiesBar();
+                    selectLocation({ name: cityName, lat, lon, region: regionName });
                     showToast(`📍 Joylashuvingiz: ${cityName} (${regionName})`, "success");
                 },
                 (err) => {
-                    if (!isAutoOnLoad) {
-                        showLoading(false);
-                        showToast("Geolokatsiyani aniqlab bo'lmadi. Shahringizni yuqoridagi ro'yxatdan tanlashingiz mumkin.", "warning");
-                    }
+                    showLoading(false);
+                    showToast("GPS geolokatsiyani aniqlab bo'lmadi. O'z tumaningizni 'Tumanlar' tugmasidan tanlang.", "warning");
                 },
-                { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
+                { timeout: 8000, enableHighAccuracy: true }
             );
+        }
+
+        // DISTRICT SELECTOR MODAL LOGIC
+        function initDistrictModal() {
+            const tabsContainer = document.getElementById('modalRegionTabs');
+            tabsContainer.innerHTML = '';
+
+            const regions = Object.keys(uzbekistanRegionsData);
+            regions.forEach(regName => {
+                const btn = document.createElement('button');
+                const isCurrent = regName === activeModalRegion;
+                btn.className = `px-3.5 py-1.5 rounded-xl whitespace-nowrap transition ${
+                    isCurrent 
+                        ? 'bg-cyan-400 text-slate-950 font-bold shadow' 
+                        : 'glass-pill text-slate-300 hover:text-white'
+                }`;
+                btn.innerText = regName.replace(' viloyati', '').replace(' shahri', '');
+                btn.onclick = () => {
+                    activeModalRegion = regName;
+                    initDistrictModal();
+                    renderModalDistricts(regName);
+                };
+                tabsContainer.appendChild(btn);
+            });
+
+            renderModalDistricts(activeModalRegion);
+        }
+
+        function renderModalDistricts(regName) {
+            const container = document.getElementById('modalDistrictsContainer');
+            container.innerHTML = '';
+
+            const districts = uzbekistanRegionsData[regName] || [];
+            districts.forEach(d => {
+                const card = document.createElement('div');
+                const isCurrent = currentCity.name === d.name || currentCity.name === d.shortName;
+                card.className = `glass-card p-3 rounded-2xl cursor-pointer transition flex flex-col justify-between ${
+                    isCurrent ? 'border-cyan-400 bg-cyan-500/20 text-cyan-300' : 'hover:border-cyan-400/40 text-slate-200'
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <strong class="text-xs text-white">${d.name}</strong>
+                        <i class="fa-solid fa-location-dot text-cyan-400 text-xs"></i>
+                    </div>
+                    <span class="text-[11px] text-slate-400 mt-1">${regName}</span>
+                `;
+                card.onclick = () => {
+                    selectLocation({
+                        name: d.name,
+                        shortName: d.shortName,
+                        lat: d.lat,
+                        lon: d.lon,
+                        region: regName
+                    });
+                    closeDistrictModal();
+                };
+                container.appendChild(card);
+            });
+        }
+
+        function openDistrictModal() {
+            document.getElementById('districtModal').classList.remove('hidden');
+        }
+
+        function closeDistrictModal() {
+            document.getElementById('districtModal').classList.add('hidden');
         }
 
         // Sleek Notification Toast
