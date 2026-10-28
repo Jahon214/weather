@@ -5,6 +5,7 @@ O'zbekiston viloyatlari va butun dunyo shaharlarining real vaqtdagi ob-havosi, 2
 ![Ob-Havo Pro](https://img.shields.io/badge/Status-Production%20Ready-emerald?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 ![API](https://img.shields.io/badge/API-Open--Meteo-cyan?style=for-the-badge)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FJahon214%2Fweather)
 
 ---
 
