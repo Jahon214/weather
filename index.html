@@ -571,6 +571,11 @@
             fetchWeatherData(currentCity);
             setupSearchAutocomplete();
 
+            // Auto-detect location on first visit if user hasn't selected a custom city yet
+            if (!savedCity) {
+                getUserLocation(true);
+            }
+
             // Keyboard shortcut '/' to search
             window.addEventListener('keydown', (e) => {
                 if (e.key === '/' && document.activeElement.id !== 'citySearchInput') {
@@ -966,6 +971,7 @@
             btn.innerHTML = `${isFav ? '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>' : ''}${city.name}`;
             btn.onclick = () => {
                 currentCity = city;
+                localStorage.setItem('obhavo_last_city', JSON.stringify(city));
                 fetchWeatherData(city);
                 renderQuickCitiesBar();
             };
@@ -1120,6 +1126,7 @@
 
         function selectSearchResult(name, lat, lon, region) {
             currentCity = { name, lat: parseFloat(lat), lon: parseFloat(lon), region };
+            localStorage.setItem('obhavo_last_city', JSON.stringify(currentCity));
             fetchWeatherData(currentCity);
             renderQuickCitiesBar();
             document.getElementById('searchResults').classList.add('hidden');
@@ -1128,13 +1135,18 @@
         }
 
         // Live User Geolocation with Reverse Geocoding
-        function getUserLocation() {
+        function getUserLocation(isAutoOnLoad = false) {
             if (!navigator.geolocation) {
-                showToast("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.", "warning");
+                if (!isAutoOnLoad) {
+                    showToast("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi.", "warning");
+                }
                 return;
             }
 
-            showLoading(true);
+            if (!isAutoOnLoad) {
+                showLoading(true);
+            }
+
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
                     const lat = pos.coords.latitude;
@@ -1142,28 +1154,42 @@
                     let cityName = "Mening joylashuvim";
                     let regionName = "O'zbekiston";
 
-                    // Reverse geocoding to retrieve actual city name
+                    // Reverse geocoding to retrieve actual city & region name
                     try {
                         const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=uz`);
                         if (geoRes.ok) {
                             const geo = await geoRes.json();
-                            cityName = geo.city || geo.locality || geo.principalSubdivision || "Mening joylashuvim";
-                            regionName = geo.countryName || geo.principalSubdivision || "O'zbekiston";
+                            if (geo.principalSubdivision) {
+                                regionName = geo.principalSubdivision;
+                            } else if (geo.countryName) {
+                                regionName = geo.countryName;
+                            }
+
+                            if (geo.city) {
+                                cityName = geo.city.replace(/\s*(tumani|shahri|district|city)\b/gi, '').trim() || geo.city;
+                            } else if (geo.locality) {
+                                cityName = geo.locality.replace(/\s*(tumani|shahri|district|city)\b/gi, '').trim() || geo.locality;
+                            } else if (geo.principalSubdivision) {
+                                cityName = geo.principalSubdivision.replace(/\s*(viloyati|region)\b/gi, '').trim() || geo.principalSubdivision;
+                            }
                         }
                     } catch (e) {
                         console.warn("Reverse geocode failed", e);
                     }
 
                     currentCity = { name: cityName, lat, lon, region: regionName };
+                    localStorage.setItem('obhavo_last_city', JSON.stringify(currentCity));
                     fetchWeatherData(currentCity);
                     renderQuickCitiesBar();
-                    showToast(`${cityName} ob-havosi aniqlandi!`, "success");
+                    showToast(`📍 Joylashuvingiz: ${cityName} (${regionName})`, "success");
                 },
                 (err) => {
-                    showLoading(false);
-                    showToast("Geolokatsiyani aniqlashga ruxsat berilmadi yoki xatolik yuz berdi.", "error");
+                    if (!isAutoOnLoad) {
+                        showLoading(false);
+                        showToast("Geolokatsiyani aniqlab bo'lmadi. Shahringizni yuqoridagi ro'yxatdan tanlashingiz mumkin.", "warning");
+                    }
                 },
-                { timeout: 10000, enableHighAccuracy: true }
+                { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
             );
         }
 
