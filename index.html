@@ -690,27 +690,14 @@
             { name: "Nurafshon", fullName: "Nurafshon shahri", lat: 41.0422, lon: 69.3561, region: "Toshkent viloyati" }
         ];
 
-        // Safe State Initialization (Cleans any junk from older test runs)
-        let savedCity = null;
-        try {
-            const raw = localStorage.getItem('obhavo_last_city');
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.name && parsed.name !== 'Africa' && parsed.lat && parsed.lon) {
-                    savedCity = parsed;
-                } else {
-                    localStorage.removeItem('obhavo_last_city');
-                }
-            }
-        } catch (e) {
-            localStorage.removeItem('obhavo_last_city');
-        }
+        // State: always default to Xovos tumani (no city caching in localStorage)
+        // Clear any stale/bad city cache from previous sessions
+        try { localStorage.removeItem('obhavo_last_city'); } catch(e) {}
 
-        // Default: Sirdaryo viloyati, Xovos tumani
-        let currentCity = savedCity || defaultCities[0];
+        let currentCity = defaultCities[0]; // Always: Xovos tumani, Sirdaryo viloyati
         let currentUnit = localStorage.getItem('obhavo_unit') || 'C';
         let currentWeatherData = null;
-        let favoriteCities = JSON.parse(localStorage.getItem('obhavo_favorites')) || ['Xovos', 'Guliston', 'Toshkent'];
+        let favoriteCities = ['Xovos', 'Guliston', 'Toshkent'];
         let chartInstance = null;
         let animationFrameId = null;
         let activeModalRegion = "Sirdaryo viloyati";
@@ -816,9 +803,6 @@
                     weather: weatherRes,
                     aqi: aqiRes
                 };
-
-                // Save selected city safely in localStorage
-                localStorage.setItem('obhavo_last_city', JSON.stringify(city));
 
                 renderUI();
             } catch (err) {
@@ -1178,10 +1162,9 @@
 
         function selectLocation(city) {
             currentCity = city;
-            localStorage.setItem('obhavo_last_city', JSON.stringify(city));
+            // No localStorage - always fresh on reload
             fetchWeatherData(city);
             renderQuickCitiesBar();
-            showToast(`📍 ${city.fullName || city.name} tanlandi`, "success");
         }
 
         // Toggle Favorites
@@ -1194,7 +1177,7 @@
                 favoriteCities.push(name);
                 showToast(`⭐ ${name} sevimlilar safiga qo'shildi!`, "success");
             }
-            localStorage.setItem('obhavo_favorites', JSON.stringify(favoriteCities));
+            localStorage.setItem('obhavo_unit', currentUnit); // only unit pref is stored
             renderQuickCitiesBar();
             updateFavoriteButtonUI();
         }
@@ -1376,9 +1359,15 @@
         }
 
         function selectSearchResult(name, lat, lon, region) {
+            // Immediately clear the search UI
+            const inp = document.getElementById('citySearchInput');
+            const res = document.getElementById('searchResults');
+            inp.value = '';
+            inp.blur();
+            res.innerHTML = '';
+            res.classList.add('hidden');
+            // Then load weather for the selected city
             selectLocation({ name, lat: parseFloat(lat), lon: parseFloat(lon), region });
-            document.getElementById('searchResults').classList.add('hidden');
-            document.getElementById('citySearchInput').value = '';
         }
 
         // Live User Geolocation with Reverse Geocoding
