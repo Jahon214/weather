@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ob-Havo Pro — O'zbekiston va Dunyo Ob-Havo Portali</title>
     
+    <!-- Prevent Stale Cache & Clear Any Legacy Storage -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+        try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+    </script>
+
     <!-- SEO & OpenGraph Meta Tags -->
     <meta name="description" content="O'zbekiston viloyat va tumanlari, Xovos, Guliston hamda dunyo shaharlarining real vaqtdagi aniq ob-havosi, 24 soatlik va 7 kunlik prognozi, havo sifati (AQI).">
     <meta property="og:title" content="Ob-Havo Pro — Mukammal Ob-Havo Portali">
@@ -690,12 +698,11 @@
             { name: "Nurafshon", fullName: "Nurafshon shahri", lat: 41.0422, lon: 69.3561, region: "Toshkent viloyati" }
         ];
 
-        // State: always default to Xovos tumani (no city caching in localStorage)
-        // Clear any stale/bad city cache from previous sessions
-        try { localStorage.removeItem('obhavo_last_city'); } catch(e) {}
+        // State: always default to Xovos tumani, Sirdaryo viloyati (localStorage completely removed)
+        try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
 
         let currentCity = defaultCities[0]; // Always: Xovos tumani, Sirdaryo viloyati
-        let currentUnit = localStorage.getItem('obhavo_unit') || 'C';
+        let currentUnit = 'C';
         let currentWeatherData = null;
         let favoriteCities = ['Xovos', 'Guliston', 'Toshkent'];
         let chartInstance = null;
@@ -839,6 +846,9 @@
             let locationTitle = city.fullName || city.name;
             if (city.region && !locationTitle.includes(city.region)) {
                 locationTitle = `${locationTitle}, ${city.region}`;
+            }
+            if (!locationTitle || locationTitle.toLowerCase().includes('africa')) {
+                locationTitle = "Xovos tumani, Sirdaryo viloyati";
             }
             document.getElementById('cityName').innerText = locationTitle;
             updateFavoriteButtonUI();
@@ -1177,7 +1187,6 @@
                 favoriteCities.push(name);
                 showToast(`⭐ ${name} sevimlilar safiga qo'shildi!`, "success");
             }
-            localStorage.setItem('obhavo_unit', currentUnit); // only unit pref is stored
             renderQuickCitiesBar();
             updateFavoriteButtonUI();
         }
@@ -1202,7 +1211,6 @@
         // Temperature Unit Switcher (°C / °F)
         function setTemperatureUnit(unit, shouldRender = true) {
             currentUnit = unit;
-            localStorage.setItem('obhavo_unit', unit);
 
             const activeClass = "px-3.5 py-1.5 rounded-xl font-bold text-xs transition bg-cyan-400 text-slate-950 shadow";
             const inactiveClass = "px-3.5 py-1.5 rounded-xl font-bold text-xs transition text-slate-300 hover:text-white";
@@ -1401,6 +1409,11 @@
                         }
                     } catch (e) {
                         console.warn("Reverse geocode failed", e);
+                    }
+
+                    if (!cityName || cityName.toLowerCase().includes('africa') || (Math.abs(lat) < 0.1 && Math.abs(lon) < 0.1)) {
+                        cityName = "Xovos";
+                        regionName = "Sirdaryo viloyati";
                     }
 
                     selectLocation({ name: cityName, lat, lon, region: regionName });
